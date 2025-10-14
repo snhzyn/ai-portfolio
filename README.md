@@ -12,6 +12,6 @@ Repo for AI portfolio
   - Prediction, Classification 
 
 With AIFFEL.  
-                  Since July, 2025  
+&nbsp;&nbsp;&nbsp;&nbsp;Since July, 2025  
 
 [blog](https://snhzyn.github.io/)
