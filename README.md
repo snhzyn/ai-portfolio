@@ -11,7 +11,7 @@ Repo for AI portfolio
 - `Time Series`
   - Prediction, Classification 
 
-With AIFFEL.  
-<p align="right"><em>Since July, 2025</em></p>
+With AIFFEL.<br/>
+&emsp;&emsp;&emsp;&emsp;Since July, 2025
 
 [blog](https://snhzyn.github.io/)
