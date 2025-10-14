@@ -1,3 +1,3 @@
-repo for ds portfolio
+Repo for ai portfolio
 
 With AIFFEL
