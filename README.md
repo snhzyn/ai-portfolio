@@ -8,18 +8,18 @@
 
 ```
 AI-PORTFOLIO
- ├── deep-learning  
+ ├── Deep-Learning  
  │   ├── Computer Vision  
  │   ├── NLP  
  │   ├── Prediction  
- ├── machine-learning  
+ ├── Machine-Learning  
  │   ├── Regression  
  │   ├── Classification  
- ├── recommender-system  
- ├── time-series  
+ ├── Recommender-System  
+ ├── Time-Series  
  │   ├── Prediction  
  │   ├── Classification  
- ├── rag-langchain  
+ ├── RAG-Langchain  
      └── Chatbot
 ```
 
