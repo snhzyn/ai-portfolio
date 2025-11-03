@@ -5,7 +5,7 @@ UMN(University of Minnesota)의 GroupLens Research 제공 공개 데이터셋입
 [공식 다운로드](https://grouplens.org/datasets/movielens/)  
 [Kaggle](https://www.kaggle.com/datasets/odedgolden/movielens-1m-dataset/data)  
 
-Ratings를 통한 영화 추천 Dataset 에 GRU 기반 Session based Recommendation 모델을 설계해보았습니다.   
+Ratings를 통한 영화 추천 Dataset 에 **GRU 기반 Session based Recommendation** 모델을 설계해보았습니다.   
 Reference: Aiffel, GRU4Rec (Hidasi et al., 2015)  
 
 ### **Environment**
