@@ -12,7 +12,7 @@ AutoInt 논문에 게재된 [github](https://github.com/DeepGraphLearning/Recomm
 AutoInt는 Self-Attention 메커니즘을 이용해 feature 간의 상호작용을 자동으로 학습하는 모델입니다.  
 
 <figure style="text-align: center;">
-  <img src="recommender-system/MovieLens-1M(Autoint)/autoint/data/image/Autoint.png" 
+  <img src="./data/image/Autoint.png" 
        alt="Autoint" 
        width="70%" 
        style="display: block; margin: auto;">
@@ -22,7 +22,7 @@ AutoInt는 Self-Attention 메커니즘을 이용해 feature 간의 상호작용�
 AutoIntMLP(AutoInt+)는 기존 AutoInt 모델에 MLP(Multi Layer Perceptron) 블록을 병렬적으로 결합한 모델입니다. 동일한 논문에서 제안되었으며, Attention 메커니즘에 DNN 기반의 학습을 동시에 진행하여 모델의 성능을 개선하였습니다.  
 
 <figure style="text-align: center;">
-  <img src="recommender-system/MovieLens-1M(Autoint)/autoint/data/image/AutointMLP.png" 
+  <img src="./data/image/AutointMLP.png" 
        alt="AutointMLP" 
        width="70%" 
        style="display: block; margin: auto;">
@@ -66,7 +66,7 @@ poetry run jupyter notebook # VSCode: Python Interpreter로 변경
 **실험 결과**
 
 | Run | Dropout | Epochs | Embed Dim | Attention Heads Num | DNN Batch Norm | Entropy Loss | Val Loss | NDCG@10 | HitRate@10 |
-|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
 | **Run 1** | 0.4 | 5 | 16 | 2 | F | 0.5349 | 0.5439 | 0.6628 | 0.6329 |
 | **Run 2** | 0.2 | 10 | 16 | 2 | F | 0.5299 | 0.5414 | 0.6628 | 0.6329 |
 | **Run 3** | 0.2 | 10 | 24 | 4 | F | 0.5272 | 0.5411 | 0.6629 | 0.6331 |
@@ -79,7 +79,7 @@ poetry run jupyter notebook # VSCode: Python Interpreter로 변경
 Binary Crossentropy Loss, Validation Loss 는 위 Run 동안 모두 안정적으로 감소하였습니다. 파라미터 조정 뒤에도 크게 변화가 없어 실험은 Run4에서 종료하였습니다. 향후 DNN Layer를 늘리거나, Attention Heads Num을 늘려보는 방법을 시도해볼 수 있겠습니다.  
 
 <figure style="text-align: center;">
-  <img src="recommender-system/MovieLens-1M(Autoint)/autoint/data/image/loss.png" 
+  <img src="./data/image/loss.png" 
        alt="Autoint" 
        width="70%" 
        style="display: block; margin: auto;">
@@ -93,7 +93,7 @@ Binary Crossentropy Loss, Validation Loss 는 위 Run 동안 모두 안정적으
 AutoInt+는 AutoInt 보다 미세하나 성능이 개선되었습니다. 작은 AUC의 개선이 CTR에 상당한 상승을 가져왔다는 [Cheng et al., 2016] 선행 연구가 말해주듯이, 소폭의 성능 개선도 유의미한 성과라고 할 수 있겠습니다.  
 
 <figure style="text-align: center;">
-  <img src="recommender-system/MovieLens-1M(Autoint)/autoint/data/image/metrics.png" 
+  <img src="./data/image/metrics.png" 
        alt="metrics" 
        width="70%" 
        style="display: block; margin: auto;">
