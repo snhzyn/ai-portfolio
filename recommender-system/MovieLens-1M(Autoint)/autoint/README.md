@@ -124,8 +124,6 @@ autoint
 	│         │  movies_prepro.csv
 	│         │  ratings_prepro.csv
 	│         │  users_prepro.csv
-	│         │  movielens_rcmm_random.csv
-	│         │  movielens_rcmm_rating.csv
 	│         │
 	│         ├─ raw
 	│         │   │  movies.dat
