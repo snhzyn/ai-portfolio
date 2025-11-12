@@ -35,7 +35,8 @@ AI-PORTFOLIO
 
 ---
 
-## **Tech Stack**
+### **Tech Stack**
+
 - Languages: Python, SQL  
 - Frameworks: PyTorch, TensorFlow, LangChain, Streamlit  
 - Libraries: Pandas, NumPy, Scikit-learn, DTW  
@@ -46,7 +47,8 @@ AI-PORTFOLIO
 
 ---
 
-## **Workspace**
+### **Workspace**
+
 Additional studies, experiments, and archived projects are stored under the `/workspace` directory.  
 Includes early-stage models, EDA(exploratory data analysis), and foundational deep-learning exercises.
 
