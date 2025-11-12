@@ -1,29 +1,56 @@
 ### **AI portfolio**  
 
-학습 및 사이드 프로젝트를 모아 두었습니다.  
-2025년 10월 자료부터 각 폴더에 pyproject.toml 를 제공하고 있습니다.  
+This repository showcases my projects in three main focus areas:  
+- Recommender Systems — AutoInt, session-based recommendation  
+- Time-Series Forecasting — ARIMA-based forecasting, DTW-based classification & Prediction  
+- RAG & LangChain — Multi format document retrieval, Streamlit-based chatbot  
 
+--- 
 
-### **Structure**
+### **Structure**  
 
 ```
 AI-PORTFOLIO
- ├── Deep-Learning  
- │   ├── Computer Vision  
- │   ├── NLP  
- │   ├── Prediction  
- ├── Machine-Learning  
- │   ├── Regression  
- │   ├── Classification  
- ├── Recommender-System  
- ├── Time-Series  
- │   ├── Prediction  
- │   ├── Classification  
- ├── RAG-Langchain  
-     └── Chatbot
+├── rag-langchain
+│   └── chatbot
+├── recommender-system
+│   ├── movielens-autoint
+│   └── movielens-session
+├── time-series
+│   ├── airpassengers-prediction
+│   └── usa-electricity-dtw-classification
+├── workspace
+│   ├── deep-learning
+│   │   ├── computer-vision
+│   │   ├── nlp
+│   │   └── prediction
+│   └── machine-learning
+│       ├── classification
+│       ├── eda
+│       ├── nlp
+│       └── prediction
+└── README.md
+
 ```
+
+---
+
+## **Tech Stack**
+- Languages: Python, SQL  
+- Frameworks: PyTorch, TensorFlow, LangChain, Streamlit  
+- Libraries: Pandas, NumPy, Scikit-learn, DTW  
+- Recommender & Ranking: Implicit, AutoInt, Matrix Factorization    
+- Evaluation: Scikit-learn Metrics, Recall@K, NDCG, MAP  
+- Visualization: Matplotlib, Seaborn, Plotly  
+- Tools: Poetry, VSCode, Docker, GitHub
+
+---
+
+## **Workspace**
+Additional studies, experiments, and archived projects are stored under the `/workspace` directory.  
+Includes early-stage models, EDA(exploratory data analysis), and foundational deep-learning exercises.
 
 With AIFFEL.<br/>
 Since July, 2025
 
-[blog](https://snhzyn.github.io/)
+[Dev blog](https://snhzyn.github.io/)
