@@ -94,7 +94,7 @@ Includes early-stage models, EDA(Exploratory Data Analysis), and foundational de
 [Workspace](https://github.com/snhzyn/ai-portfolio/tree/master/workspace)
 
 
-Last updated / 최종 수정일: **2025-12-19**
+Last updated / 최종 수정일: **2025-12-19**   
 Since July, 2025  
 
 --- 
