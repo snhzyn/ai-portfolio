@@ -206,9 +206,9 @@ def render_home():
                         llm_db.close()
 
                 st.success(
-                    f"완료! total={result['total']} / inserted={result['inserted']} "
-                    f"/ skipped_existing={result['skipped_existing']} / skipped_empty={result['skipped_empty']} "
-                    f"/ failed={result['failed']}"
+                    f"저장이 완료되었습니다. 전체 기사={result['total']} / 정상 저장={result['inserted']} "
+                    f"/ 중복 기사={result['skipped_existing']} / 누락 기사={result['skipped_empty']} "
+                    f"/ 저장 실패={result['failed']}"
                 )
 
                 load_all_articles.clear()
