@@ -89,10 +89,16 @@ project-NVISIA/
 ### 실행 방법 (Environment Setup)  
 
 ```bash
+# poetry 
 pip install --upgrade pip
 pip install poetry
 poetry install --no-root
 poetry run python main.py
+
+# docker(env 값 입력해주세요)
+cp .env.docker.example .env.docker
+docker compose build
+docker compose up
 ```
 
 상세한 실행 방법은 [링크](https://github.com/milkpotato1000/NVISIA)를 통해 확인 할 수 있습니다.  
