@@ -4,6 +4,7 @@
 import numpy as np
 import pandas as pd
 from pathlib import Path
+from config import DB
 
 import streamlit as st
 from streamlit_folium import st_folium
@@ -40,18 +41,6 @@ notes = """
 
 
 # =========================
-# DB 설정
-# =========================
-DB = dict(
-    host="localhost",
-    database="nvisiaDb",
-    user="postgres",
-    password="postgres1202",
-    port=5432,
-)
-
-
-# =========================
 # 파일 경로 세팅 
 # =========================
 ROOT_DIR = Path(__file__).resolve().parents[1]   
@@ -74,31 +63,53 @@ def get_psql_conn():
     )
     return conn
 
+def table_exists(conn, table_name, schema):
+    """첫 실행 시, 테이블 없음 오류 방지"""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = %s AND table_name = %s
+            );            
+            """,
+            (schema, table_name),
+        )
+        return bool(cur.fetchone()[0])
+
 @st.cache_data
 def load_all_articles():
     conn = get_psql_conn()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute("""
-        SELECT
-            id,
-            title,
-            summary,
-            publish_date,
-            category,
-            event_loc,
-            event_org,
-            url
-        FROM summary
-        ORDER BY id DESC
-    """)
-    rows = cur.fetchall()
-    cur.close()
-    conn.close()
+    cur = None
+    try: 
+        if not table_exists(conn, "summary", "public"):
+            return None
 
-    df = pd.DataFrame(rows)
-    if "publish_date" in df.columns:
-        df["publish_date"] = df["publish_date"].astype(str).str[:10]
-    return df
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("""
+            SELECT
+                id,
+                title,
+                summary,
+                publish_date,
+                category,
+                event_loc,
+                event_org,
+                url
+            FROM summary
+            ORDER BY id DESC
+        """)
+        rows = cur.fetchall()
+
+        df = pd.DataFrame(rows)
+        if "publish_date" in df.columns:
+            df["publish_date"] = df["publish_date"].astype(str).str[:10]
+        return df
+    finally:
+        if cur is not None:
+            cur.close()
+        conn.close()
 
 def split_event_locs(event_loc_str: str):
     """'평양시, 함경북도 청진시' → ['평양시', '함경북도 청진시']"""
@@ -256,6 +267,16 @@ def render_dashboard():
     # 데이터 로드
     # =========================
     df = load_all_articles()
+
+    if df is None:
+        st.warning("테이블이 존재하지 않습니다. Home에서 CSV 업로드를 먼저 진행해주세요.")
+        st.button("Home으로 이동하기", on_click=go_home)
+        st.stop()
+
+    if df.empty:
+        st.warning("조회할 기사가 없습니다. Home에서 기사 업로드를 진행해주세요.")
+        st.button("Home으로 이동하기", on_click=go_home)
+        st.stop()        
 
     # 차트용 전역 설정 (카테고리 리스트 및 색상 고정)
     if not df.empty and "category" in df.columns:

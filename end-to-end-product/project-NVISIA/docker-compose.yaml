@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: nvisiaDb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres1202
+    ports:
+      - "5433:5432"
+    volumes:
+      - nvisia_pgdata:/var/lib/postgresql/data
+
+  app:
+    build: .
+    image: nvisia:0.1
+    depends_on:
+      - db
+    env_file:
+      - .env.docker
+    environment:
+      DB_HOST: db     
+      DB_PORT: "5432"
+      DB_NAME: nvisiaDb
+      DB_USER: postgres
+      DB_PASSWORD: postgres1202
+    ports:
+      - "8501:8501"
+
+volumes:
+  nvisia_pgdata:
