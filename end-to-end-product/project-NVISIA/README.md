@@ -147,7 +147,7 @@ Streamlit Dashboard
 
 ### 프로젝트 정보 (Project Info)
 
-- **기간(Period)**: 2025.11.17 ~ 2026.01.06 (In Progress)
+- **기간(Period)**: 2025.11.17 ~ 2026.01.06 
 
 - **Contributors**
 *  손호진: 추천 시스템 디벨롭, Database 구축 및 운영(DBA), App-DB 데이터 인터랙션 관리, 지리 정보 시각화(Geospatial Visualization), 파일 업로더 구현  
