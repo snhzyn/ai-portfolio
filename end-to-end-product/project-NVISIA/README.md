@@ -38,6 +38,15 @@ Streamlit 대시보드 시각화까지 전 과정을 하나의 시스템으로 �
 
 ---
 
+### 발표 자료 (Presentation Slides)  
+
+NVISIA 프로젝트 발표 자료는 아래의 링크에서 다운로드 하실 수 있습니다.  
+  
+[NVISIA 발표자료 다운로드](./data/NVISIA_발표자료.pdf)  
+
+---
+
+
 ### 주요 기능 (Key Features)  
 
 - **Automated Data Pipeline**: 뉴스 크롤링 및 CSV 기반 데이터 수집, ETL 자동화  
