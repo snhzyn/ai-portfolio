@@ -33,6 +33,10 @@ In addition to topic-focused projects, this portfolio includes a flagship **end-
   - DTW-based time-series classification   
   - ARIMA 기반의 시계열 예측 모델과 DTW 기반의 시계열 데이터 분류 모델입니다.  
 
+- [Algorithm & Problem Solving](https://github.com/snhzyn/ai-portfolio/tree/master/algorithm)
+  - Implementation, String, Sorting, Data Structure, Brute Force
+  - Baekjoon, programmers 등 알고리즘 문제 풀이 아카이브입니다.
+
 --- 
 
 ### **Repo 구조 (Structure)**  
@@ -55,6 +59,8 @@ AI-PORTFOLIO
 │   ├── airpassengers-prediction
 │   └── usa-electricity-dtw-classification
 ├── workspace
+│   ├── algorithm
+│   │   └── baekjoon
 │   ├── deep-learning
 │   │   ├── computer-vision
 │   │   ├── nlp
