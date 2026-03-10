@@ -7,10 +7,11 @@ import matplotlib.pyplot as plt
 from core.config import DB, DATA_DIR
 
 from app.services.article_reader import ArticleReader
+from app.services.article_table import render_article_table
 from app.services.chart_service import prepare_category_chart_context, build_category_bar_chart
 from app.services.ingestion_runner import run_csv_ingestion
 from app.services.knowledge_runner import update_knowledge_graph_state
-from app.services.knowledge import KnowledgeGraph
+from app.services.recommendation_table import render_recommendation_table
 from app.services.recommendation_view import build_recommendation_view
 from app.services.resources import get_recommender, get_geocoder
 from app.services.session_state import init_session_state
@@ -115,8 +116,7 @@ def render_dashboard():
     # =========================
     # 데이터 로드
     # =========================
-    reader = ArticleReader(DB)
-    df = reader.load_all_articles()
+    df = ArticleReader(DB).load_all_articles()
 
     if df is None:
         st.warning("테이블이 존재하지 않습니다. Home에서 CSV 업로드를 먼저 진행해주세요.")
@@ -159,31 +159,8 @@ def render_dashboard():
     # bottom_left: 전체 기사 목록 + 선택 (row 클릭 방식)
     # =========================
     with bottom_left:
-        st.subheader("전체 기사 목록")
-
-        df_display = df[['id', 'title', 'summary', 'publish_date', 'category']].copy()
-        st.caption(f"총 {len(df_display)}개 기사 - 더 많은 기사를 보려면 스크롤하세요.")
-
-        event = st.dataframe(
-            df_display,
-            width="stretch",
-            height=table_height,
-            selection_mode="single-row",
-            on_select="rerun",
-            key="article_table",
-        )
-
-        if event.selection.rows:
-            idx = event.selection.rows[0]
-            st.session_state["selected_id"] = df_display.iloc[idx]["id"]
-        else:
-            st.session_state["selected_id"] = None
-
-        # 지도 조작 등으로 리런될 때 event.selection.rows가 비어있을 수 있어
-        # else 구문(선택 해제 시 None 처리)을 제거하여 선택 상태를 유지함.
-
-    selected_id = st.session_state.get("selected_id")
-
+        selected_id = render_article_table(df, table_height)
+        st.session_state["selected_id"] = selected_id       
 
     # =========================
     # top: 추천 기사 테이블 + 파이차트 세팅
@@ -207,46 +184,7 @@ def render_dashboard():
     # top_right: 추천 기사 테이블
     # =========================
     with top_right:
-        if selected_id is not None:
-            st.subheader(f"관련 추천 뉴스 (기준: {selected_id})")
-        else:
-            st.subheader("관련 추천 뉴스")
-
-        if not rec_df_view.empty:
-
-            column_config = {}
-            if 'url' in rec_df_view.columns:
-                column_config["url"] = st.column_config.LinkColumn(
-                    "Link",
-                    display_text="Open Article"
-                )
-
-            # 표시할 컬럼 선택
-            display_df = rec_df_view[['url', 'id', 'title', 'publish_date']]
-
-            # 스타일링 함수: selected_id와 일치하는 행 강조
-            def highlight_row(row):
-                if row['id'] == selected_id:
-                    # Streamlit 기본 선택 색상과 유사한 붉은 계열의 반투명 배경색 적용
-                    return ['background-color: rgba(255, 75, 75, 0.2)'] * len(row)
-                return [''] * len(row)
-
-            # 스타일 적용
-            styled_df = display_df.style.apply(highlight_row, axis=1)
-   
-            st.dataframe(
-                styled_df,
-                width="stretch",
-                hide_index=True,
-                height=300,
-                column_config=column_config,
-            )
-        else:
-            if selected_id is None:
-                st.info("아래 목록에서 기사를 선택하면 추천 뉴스가 표시됩니다.")
-            else:
-                st.info("추천 기사가 없습니다.")
-
+        render_recommendation_table(rec_df_view, selected_id)
 
     # =========================
     # top_middle: knowledge graph
