@@ -1,13 +1,9 @@
 import os
 import pandas as pd
-import numpy as np
-import re
 import io
 from openai import OpenAI
-from pathlib import Path
-import json
 import psycopg2
-import pickle
+
 
 from pipeline.ingest.location_normalizer import LocationNormalizer
 from pipeline.ingest.article_repository import ArticleRepository
@@ -95,9 +91,6 @@ class LLMtoDatabase:
             )
             return None   
 
-    # =========================
-    # I/O
-    # =========================
     @staticmethod
     def read_csv(file_bytes):
         """
