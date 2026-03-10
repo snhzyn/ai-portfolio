@@ -17,6 +17,7 @@ LLM ingestion service for NVISIA.
 
 Responsibilities:
 - read uploaded CSV files
+- coordinate LLM extraction
 - classify article categories
 - generate embeddings
 - store results in PostgreSQL
@@ -48,8 +49,8 @@ class LLMtoDatabase:
             label_encoder_path = label_encoder_path
             )
         
+        nk_path = nk_cities_path or NK_CITIES_PATH   
         self.location_normalizer = self._init_location_normalizer(nk_path)
-        nk_path = nk_cities_path or NK_CITIES_PATH
 
         self.embedding_service = EmbeddingService(
             client = self.client,

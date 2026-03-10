@@ -1,27 +1,45 @@
-import pandas as pd
-import networkx as nx
-from sklearn.feature_extraction.text import TfidfVectorizer
-from community import community_louvain
 import collections
-import matplotlib.colors as mcolors
-import matplotlib.pyplot as plt
-import networkx as nx
-import os
-import matplotlib.font_manager as fm
 import textwrap
 
+import pandas as pd
+import networkx as nx
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from community import community_louvain
+
+import matplotlib.colors as mcolors
+import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
+
+
 class KnowledgeGraph:
+    """        
+    Build a knowledge graph from recommended articles.
+
+    This class takes the output from the recommender (rec.py),
+    constructs an article–keyword network, computes TF-IDF weights,
+    applies Louvain community detection, and generates a visualization.
+
+    Input:
+        rec_list (list[dict]):
+            A list of recommended articles in JSON-like format containing:
+            id, keywords, category, publish_date, title, and url.
+
+    Output:
+        A matplotlib figure representing the knowledge graph.
+    """
 
     def __init__(self, rec_list):
         """
-        
-        rec.py 의 list output을 받아서 knowledge graph를 출력.
+        Initialize the knowledge graph builder.
 
-        input: rec_list(id, keywords, category, publish_date, title, url - json 양식)
-        output: graph
-
+        This step:
+        1. Converts the recommendation list into a DataFrame
+        2. Preprocesses article keywords
+        3. Computes TF-IDF scores
+        4. Builds the article–keyword graph
+        5. Applies Louvain community detection
         """
-
         self.dataframe = pd.DataFrame(rec_list)
         if self.dataframe.empty:
             raise ValueError("추천 기사가 없거나, 키워드가 누락되었습니다.")    
@@ -34,7 +52,7 @@ class KnowledgeGraph:
 
     def preprocess_korean_text(self, text):
         if not isinstance(text, str):
-            return ''
+            return ""
 
         all_keywords = []
         for part in text.split(','):
@@ -153,8 +171,11 @@ class KnowledgeGraph:
     @staticmethod
     def setup_korean_font():
         """
-        한글 폰트 셋업을 안 할 경우, UserWarning: Glyph 50896 발생.
-        DejaVu Sans 에서 한글 폰트를 지원하지 않아서 전부 깨져서 출력됨.
+        Configure matplotlib to support Korean fonts.
+
+        Without setting a Korean font, matplotlib may raise glyph warnings
+        and display Korean characters incorrectly because the default
+        DejaVu Sans font does not fully support Korean text.
         """
         available_fonts = {f.name for f in fm.fontManager.ttflist}
 
@@ -174,9 +195,11 @@ class KnowledgeGraph:
     @staticmethod
     def text_split(text, max_width):
         """
-        노드 라벨이 너무 길면 자동 줄바꿈.
-        - 공백 있는 경우: textwrap 으로 단어 단위 줄바꿈
-        - 공백 없는 한글 단어: 글자 수 기준으로 잘라서 줄바꿈
+        Split long node labels into multiple lines.
+
+        If the text contains spaces, the label is wrapped using textwrap
+        to preserve word boundaries. If the text has no spaces (e.g., Korean),
+        it is split based on character length.
         """
         if not isinstance(text, str):
             return text
@@ -192,81 +215,9 @@ class KnowledgeGraph:
             text[i : i + max_width] for i in range(0, len(text), max_width)
         )
 
-    def get_graph(self):
-        self.setup_korean_font()
-
-        self.num_communities = len(set(self.partition.values()))
-
-        colors = list(mcolors.TABLEAU_COLORS.values()) + list(mcolors.CSS4_COLORS.values())
-        community_colors = {comm_id: colors[i % len(colors)] for i, comm_id in enumerate(sorted(set(self.partition.values())))}
-
-        article_nodes = []
-        keyword_nodes = []
-        article_labels = {}
-        keyword_labels = {}
-        article_colors = []
-        keyword_colors = []
-
-        ordered_nodelist = list(self.G.nodes())
-
-        for node_id in ordered_nodelist:
-            attributes = self.G.nodes[node_id]
-            comm_id = attributes.get('community', -1)
-            node_color = community_colors.get(comm_id, 'gray')
-
-            if attributes['type'] == 'article':
-                article_nodes.append(node_id)
-                article_labels[node_id] = attributes['title']
-                article_colors.append('lightsteelblue') 
-            elif attributes['type'] == 'keyword':
-                keyword_nodes.append(node_id)
-                keyword_labels[node_id] = node_id
-                keyword_colors.append(node_color)
-
-        plt.figure(figsize=(20, 15)) 
-        pos = nx.spring_layout(self.G, k=1.5, iterations=50, dim=2, seed=42) # k: 노드 간 거리, iterations: 레이아웃 계산 반복 횟수. 재현성을 위해 seed 추가
-
-        if not pos:
-            print("오류: nx.spring_layout이 빈 위치 사전을 반환했습니다. 이는 그래프가 비어 있거나 문제가 있음을 의미할 수 있습니다.")
-        else:
-            nx.draw_networkx_edges(self.G, pos, edge_color='gray', width=0.5)
-
-            # 기사 노드 (사각형)
-            if article_nodes:
-                nx.draw_networkx_nodes(self.G, pos,
-                                    nodelist=article_nodes,
-                                    node_shape='s',
-                                    node_color=article_colors,
-                                    node_size=3000)
-                nx.draw_networkx_labels(self.G, pos,
-                                        labels=article_labels,
-                                        font_size=24,
-                                        font_color='black',
-                                        font_weight='bold',
-                                        font_family=plt.rcParams["font.family"])
-                
-            # 키워드 노드 (원형)
-            if keyword_nodes:
-                nx.draw_networkx_nodes(self.G, pos,
-                                    nodelist=keyword_nodes,
-                                    node_shape='o',
-                                    node_color=keyword_colors,
-                                    node_size=10000)
-                nx.draw_networkx_labels(self.G, pos,
-                                        labels=keyword_labels,
-                                        font_size=24,
-                                        font_color='black',
-                                        font_family=plt.rcParams["font.family"])
-                
-            # plt.title('Knowledge Graph with Louvain Communities', size=20) 
-            plt.axis('off')
-            plt.show()
-
     def get_figure(self):
 
         self.setup_korean_font()
-
-        self.num_communities = len(set(self.partition.values()))
 
         colors = list(mcolors.TABLEAU_COLORS.values())[5:] 
         community_colors = {comm_id: colors[i % len(colors)] for i, comm_id in enumerate(sorted(set(self.partition.values())))}
