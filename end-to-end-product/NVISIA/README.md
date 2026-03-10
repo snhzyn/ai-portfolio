@@ -150,37 +150,66 @@ Interactive dashboard for exploring news data and analytical results.
 
 ```
 NVISIA/
-├─ app/
-│  ├─ dashboard.py
-│  └─ services/
+├─ app/                           # Streamlit application layer
+│  ├─ dashboard.py                # Streamlit application entrypoint
+│  └─ services/                   # Application service layer
+│     ├─ article_reader.py
+│     ├─ article_table.py
+│     ├─ chart_service.py
 │     ├─ geocoder.py
+│     ├─ ingestion_runner.py
+│     ├─ knowledge_runner.py
 │     ├─ knowledge.py
-│     └─ rec.py
-├─ core/
-│  └─ config.py
-├─ pipeline/
-│  ├─ crawling/
-│  │  └─ spn_crawler.py
-│  └─ ingest/
-│     └─ llm_to_db.py
-├─ scripts/
-│  └─ run_spn_crawler.py
-├─ data/
+│     ├─ rec.py
+│     ├─ recommendation_table.py
+│     ├─ recommendation_view.py
+│     ├─ resources.py
+│     └─ session_state.py
+│
+├─ core/                         # Global configuration
+│  └─ config.py                  # Central configuration
+│
+├─ data/                         # Static datasets
 │  ├─ nk_cities.csv
 │  ├─ spnews_db_test.csv
 │  └─ upload_template.csv
-├─ assets/
+│
+├─ assets/                       # Images & documentation
 │  ├─ images/
 │  │  ├─ dashboard.png
 │  │  └─ home.png
 │  └─ docs/
 │     └─ NVISIA_발표자료.pdf
-├─ models/
+│
+├─ models/                       # ML model artifacts 
 │  ├─ label.pkl
 │  ├─ svm.pkl
 │  └─ vectorizer.pkl
-├─ main.py
+│
+├─ pipeline/                     # Data ingestion & processing pipeline
+│  ├─ crawling/                  # News crawling pipeline
+│  │  └─ spn_crawler.py
+│  └─ ingest/                    # LLM/ML enrichment & database ingestion
+│     ├─ article_repository.py
+│     ├─ classifier.py
+│     ├─ embedding_service.py
+│     ├─ llm_extractor.py
+│     ├─ llm_to_db.py
+│     └─ location_normalizer.py
+│
+├─ scripts/
+│  └─ run_spn_crawler.py
+│
+├─ main.py                       # CLI entrypoint
+│
 ├─ pyproject.toml
+│
+├─ docker/                       # Images & documentation
+│  └─ init/
+│     ├─ 01_extensions.sql
+│     ├─ 02_summary_schema.sql
+│     └─ 03_geo_schema.sql
+│
 ├─ Dockerfile
 ├─ docker-compose.yaml
 └─ README.md

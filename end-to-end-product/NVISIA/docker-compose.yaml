@@ -23,6 +23,8 @@ services:
       DB_NAME: nvisiaDb
       DB_USER: postgres
       DB_PASSWORD: postgres1202
+      STREAMLIT_SERVER_ADDRESS: 0.0.0.0
+      STREAMLIT_SERVER_PORT: "8501"
     ports:
       - "8501:8501"
 
