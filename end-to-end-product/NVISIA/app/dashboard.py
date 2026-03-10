@@ -1,115 +1,25 @@
 # =========================
 # import
 # =========================
-import numpy as np
 import pandas as pd
-from pathlib import Path
-from core.config import DB
+from core.config import DB, DATA_DIR, MODEL_DIR
 
 import streamlit as st
 from streamlit_folium import st_folium
 import matplotlib.pyplot as plt
-import folium
-import hashlib
 
-from services.rec import Recommender
-from services.geocoder import Geocoder
-from services.knowledge import KnowledgeGraph
+from app.services.rec import Recommender
+from app.services.geocoder import Geocoder
+from app.services.knowledge import KnowledgeGraph
+from app.services.article_reader import ArticleReader
 from pipeline.ingest.llm_to_db import LLMtoDatabase
 
-import psycopg2
-from psycopg2.extras import RealDictCursor
-
-
-# =========================
-
-
-notes = """
-
-동작 흐름:
-    1) 기사 원문 CSV 파일 업로드 (필수 컬럼: title, content, publish_date, url)
-    2) LLMtoDatabase 모듈을 통해
-       - 기사 요약(summary)
-       - 임베딩 생성(embedding)
-       - 카테고리 분류(categorization) 수행
-    3) 처리된 데이터를 PostgreSQL 데이터베이스에 저장
-    4) Recommender 모듈을 통해 관련 기사 Top-k 추천 (기본값: k = 10)
-    5) 추천 
-    5) Geocoder 모듈을 통해 기사 관련 위치를 지도에 시각화
-
-"""
-
-
-# =========================
-# 파일 경로 세팅 
-# =========================
-ROOT_DIR = Path(__file__).resolve().parents[1]   
-DATA_DIR = ROOT_DIR / "data"
-MODELS_DIR = ROOT_DIR / "models"
 
 
 # =========================
 # 공용 커넥터 / 헬퍼
 # =========================
-def get_psql_conn():
-    """간단 쿼리용 psycopg2 커넥션 (글로벌 캐시 X, 매번 열고 닫기)"""
-    conn = psycopg2.connect(
-        host=DB["host"],
-        database=DB["database"],
-        user=DB["user"],
-        password=DB["password"],
-        port=DB["port"],
-        options="-c client_encoding=UTF8 -c lc_messages=C",
-    )
-    return conn
 
-def table_exists(conn, table_name, schema):
-    """첫 실행 시, 테이블 없음 오류 방지"""
-    with conn.cursor() as cur:
-        cur.execute(
-            """
-            SELECT EXISTS (
-                SELECT 1
-                FROM information_schema.tables
-                WHERE table_schema = %s AND table_name = %s
-            );            
-            """,
-            (schema, table_name),
-        )
-        return bool(cur.fetchone()[0])
-
-@st.cache_data
-def load_all_articles():
-    conn = get_psql_conn()
-    cur = None
-    try: 
-        if not table_exists(conn, "summary", "public"):
-            return None
-
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("""
-            SELECT
-                id,
-                title,
-                summary,
-                publish_date,
-                category,
-                event_loc,
-                event_org,
-                url
-            FROM summary
-            ORDER BY id DESC
-        """)
-        rows = cur.fetchall()
-
-        df = pd.DataFrame(rows)
-        if "publish_date" in df.columns:
-            df["publish_date"] = df["publish_date"].astype(str).str[:10]
-        return df
-    finally:
-        if cur is not None:
-            cur.close()
-        conn.close()
 
 def split_event_locs(event_loc_str: str):
     """'평양시, 함경북도 청진시' → ['평양시', '함경북도 청진시']"""
@@ -134,9 +44,9 @@ plt.rc("font", family="Malgun Gothic")
 plt.rc("axes", unicode_minus=False)
 
 # LLMtoDatabase용 pickle 경로
-TFIDF_VECTORIZER_PATH = MODELS_DIR / "vectorizer.pkl"
-SVM_MODEL_PATH = MODELS_DIR / "svm.pkl"
-LABEL_ENCODER_PATH = MODELS_DIR / "label.pkl"
+TFIDF_VECTORIZER_PATH = MODEL_DIR / "vectorizer.pkl"
+SVM_MODEL_PATH = MODEL_DIR / "svm.pkl"
+LABEL_ENCODER_PATH = MODEL_DIR / "label.pkl"
 
 if "page" not in st.session_state:
     st.session_state["page"] = "home" 
@@ -222,7 +132,6 @@ def render_home():
                     f"/ 저장 실패={result['failed']}"
                 )
 
-                load_all_articles.clear()
                 go_dashboard()
 
             except Exception as e:
@@ -266,7 +175,8 @@ def render_dashboard():
     # =========================
     # 데이터 로드
     # =========================
-    df = load_all_articles()
+    reader = ArticleReader(DB)
+    df = reader.load_all_articles()
 
     if df is None:
         st.warning("테이블이 존재하지 않습니다. Home에서 CSV 업로드를 먼저 진행해주세요.")
