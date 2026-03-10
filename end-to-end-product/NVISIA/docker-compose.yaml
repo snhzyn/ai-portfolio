@@ -9,6 +9,7 @@ services:
       - "5433:5432"
     volumes:
       - nvisia_pgdata:/var/lib/postgresql/data
+      - ./docker/init:/docker-entrypoint-initdb.d
 
   app:
     build: .
