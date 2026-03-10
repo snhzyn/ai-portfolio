@@ -12,6 +12,7 @@ import pickle
 from pipeline.ingest.location_normalizer import LocationNormalizer
 from pipeline.ingest.article_repository import ArticleRepository
 from pipeline.ingest.classifier import ArticleClassifier
+from pipeline.ingest.embedding_service import EmbeddingService
 from core.config import OPENAI_MODEL, OPENAI_EMBED_MODEL, NK_CITIES_PATH
 
 """
@@ -40,6 +41,10 @@ class LLMtoDatabase:
         self.embed_model = OPENAI_EMBED_MODEL
 
         self._init_openai_client()
+        self.embedding_service = EmbeddingService(
+            client = self.client,
+            embed_model = self.embed_model
+        )
         self._init_db(host, database, user, password, port)
         self.repository = ArticleRepository(self.conn, self.cur)
 
@@ -49,8 +54,9 @@ class LLMtoDatabase:
             label_encoder_path = label_encoder_path
             )
         
-        nk_path = nk_cities_path or NK_CITIES_PATH
         self.location_normalizer = self._init_location_normalizer(nk_path)
+        nk_path = nk_cities_path or NK_CITIES_PATH
+        
 
     def _init_openai_client(self):
         """
@@ -140,7 +146,7 @@ class LLMtoDatabase:
                 keywords_text = self.value_to_csv_string(llm.get("keywords"))
 
                 category = self.classifier.predict_category(summary_text, keywords_text)
-                embedding = self.get_embeddings(summary_text, keywords_text)
+                embedding = self.embedding_service.get_embeddings(summary_text, keywords_text)
 
                 self.repository.insert_summary(
                     llm=llm,
@@ -249,26 +255,7 @@ class LLMtoDatabase:
 
         return str(value)
 
-    def text_to_embedding(self, text):
-        """
-        Generate embedding vector for a given text using OpenAI embeddings API.
-        """
-        text_embeddings = self.client.embeddings.create(
-            model = self.embed_model,
-            input = text
-        )
-        embeddings = np.array(text_embeddings.data[0].embedding, dtype = np.float32)
-        return embeddings
 
-    def get_embeddings(self, summary, keywords):
-        """
-        Concatenate summary and keyword embeddings for recommendation use.
-        """
-
-        embed_summary = self.text_to_embedding(summary)
-        embed_keywords = self.text_to_embedding(keywords)
-        embed_rec = np.hstack([embed_summary, embed_keywords])
-        return embed_rec
     
     def close(self):
         self.cur.close()
