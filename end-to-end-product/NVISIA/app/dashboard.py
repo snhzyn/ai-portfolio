@@ -4,7 +4,7 @@
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from config import DB
+from core.config import DB
 
 import streamlit as st
 from streamlit_folium import st_folium
@@ -12,10 +12,10 @@ import matplotlib.pyplot as plt
 import folium
 import hashlib
 
-from rec import Recommender
-from geocoder import Geocoder
-from llmtodb import LLMtoDatabase
-from knowledge import KnowledgeGraph
+from services.rec import Recommender
+from services.geocoder import Geocoder
+from services.knowledge import KnowledgeGraph
+from pipeline.ingest.llm_to_db import LLMtoDatabase
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -591,80 +591,12 @@ def render_dashboard():
         if selected_id:
             df_sel = df[df["id"] == selected_id].copy()
 
-            # event_loc layer
-            locs = set()
-            for loc_str in df_sel["event_loc"].fillna(""):
-                for loc in split_event_locs(loc_str):
-                    locs.add(loc)
-            locs = sorted(locs)
+            m = geo.build_article_map(df_sel)
 
-            if locs:
-                geo_dict = geo.get_geometry(locs)
-
-                center = (39.0, 127.0)
-                m = folium.Map(location=center, zoom_start=7)
-
-                def color_from_name(name):
-                    h = hashlib.md5(name.encode("utf-8")).hexdigest()[:6]
-                    return f"#{h}"
-
-                for loc, geom in geo_dict.items():
-                    feature = {
-                        "type": "Feature",
-                        "geometry": geom,
-                        "properties": {"event_loc": loc},
-                    }
-
-                    folium.GeoJson(
-                        feature,
-                        name=loc,
-                        tooltip=folium.Tooltip(loc),
-                        style_function=lambda x, loc_name=loc: {
-                            "fillColor": color_from_name(loc_name),
-                            "color": "black",
-                            "weight": 1,
-                            "fillOpacity": 0.6,
-                        },
-                        highlight_function=lambda x: {
-                            "weight": 3,
-                            "color": "yellow",
-                            "fillOpacity": 0.8,
-                        },
-                    ).add_to(m)
-
-                # event_org layer
-                event_orgs = set()
-                for org_str in df_sel["event_org"].fillna(""):
-                    for org in split_event_orgs(org_str):
-                        event_orgs.add(org)
-                event_orgs = sorted(event_orgs)
-
-                org_rows = geo.do_spatial_join(locs, event_orgs)
-
-                org_fg = folium.FeatureGroup(
-                    name = "주요 위치",
-                    show = True
-                )
-
-                if org_rows:
-                    for r in org_rows:
-                        folium.CircleMarker(
-                            location=[r["y_4326"], r["x_4326"]],
-                            radius=3,
-                            tooltip=r["org_name"],
-                            fill=True,
-                            fill_opacity=0.9,
-                            color="red",
-                        ).add_to(org_fg)
-
-                org_fg.add_to(m)
-
-                folium.LayerControl(collapsed=False).add_to(m)
-
-                left_spacer, center_col, right_spacer = st.columns([0.5, 3, 0.5])
+            if m is not None:
+                _, center_col, _ = st.columns([0.5, 3, 0.5])
                 with center_col:
                     st_folium(m, width="100%", height=400)
-
             else:
                 st.info("선택된 기사에 위치 정보가 없습니다.")
         else:

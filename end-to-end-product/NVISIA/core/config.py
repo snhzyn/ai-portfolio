@@ -8,7 +8,7 @@ Postgres db 설정.
 
 """
 
-def get_db_config() -> dict:
+def get_db_config():
     return dict(
         host=os.getenv("DB_HOST", "localhost"),
         database=os.getenv("DB_NAME", "nvisiaDb"),
