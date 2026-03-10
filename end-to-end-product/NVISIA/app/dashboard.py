@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from core.config import DB, DATA_DIR, MODEL_DIR
 
 from app.services.article_reader import ArticleReader
+from app.services.chart_service import prepare_category_chart_context, build_category_bar_chart
 from app.services.ingestion_runner import run_csv_ingestion
 from app.services.knowledge import KnowledgeGraph
 from app.services.recommendation_view import build_recommendation_view
@@ -153,33 +154,7 @@ def render_dashboard():
         st.button("Home으로 이동하기", on_click=go_home)
         st.stop()        
 
-    # 차트용 전역 설정 (카테고리 리스트 및 색상 고정)
-    if not df.empty and "category" in df.columns:
-
-        # 빈도수 기준 내림차순 정렬 
-        global_counts = df["category"].dropna().value_counts()
-        all_categories = global_counts.index.tolist()
-    
-        # 색상 맵 생성 (파랑, 주황, 초록, 보라, 빨강 순)
-        # 직접 HEX 코드 지정 또는 tab10에서 추출하여 순서 배치
-    
-        custom_palette = [
-            "#1f77b4", # Blue
-            "#ff7f0e", # Orange
-            "#2ca02c", # Green
-            "#9467bd", # Purple
-            "#d62728", # Red
-            "#8c564b", # Brown
-            "#e377c2", # Pink
-            "#7f7f7f", # Gray
-            "#bcbd22", # Olive
-            "#17becf", # Cyan
-        ]
-    
-        cat_color_map = {cat: custom_palette[i % len(custom_palette)] for i, cat in enumerate(all_categories)}
-    else:
-        all_categories = []
-        cat_color_map = {}
+    all_categories, cat_color_map = prepare_category_chart_context(df)
 
 
     # =========================
@@ -340,66 +315,17 @@ def render_dashboard():
     # top_left: 파이차트
     # =========================
     with top_left:
-        if "category" in chart_df.columns:
-            st.subheader(chart_title)
-            category_counts = chart_df["category"].value_counts()
+        st.subheader(chart_title)
 
-            if not category_counts.empty:
+        fig = build_category_bar_chart(chart_df, all_categories, cat_color_map)
 
-                # 가로 바 차트 (Horizontal Bar Chart)
-                # 모든 항목을 항상 y축에 표시. 정렬 기준: 기사 많은 순(all_categories)이 위로 오도록.
-                # barh는 y축 0(아래)부터 그리므로, 리스트를 역순([::-1])으로 주어야 '많은 것'이 y축 상단에 위치함.
-                y_cats = all_categories[::-1]
-            
-                # 현재 데이터(chart_df)의 카운트 집계
-                current_counts_dict = category_counts.to_dict()
-                y_values = [current_counts_dict.get(c, 0) for c in y_cats]
-                y_colors = [cat_color_map.get(c, "gray") for c in y_cats]
-            
-                total = sum(y_values)
-
-                # 차트 크기: 카테고리 개수에 따라 유동적 조절 (기본 4, 항목당 0.3 추가)
-                fig_height = max(4.0, len(y_cats) * 0.4)
-                fig, ax = plt.subplots(figsize=(5, fig_height))
-            
-                bars = ax.barh(y_cats, y_values, color=y_colors, height=0.6)
-
-                # 값 표시
-                max_val = max(y_values) if y_values else 0
-            
-                for bar, val in zip(bars, y_values):
-                    if val > 0:
-                        # 개수 (바 끝)
-                        width = bar.get_width()
-                        y_pos = bar.get_y() + bar.get_height() / 2
-                        ax.text(width, y_pos, f" {int(val)}", va='center', ha='left', fontsize=9)
-                    
-                        # 비율 (바 내부)
-                        if total > 0:
-                            pct = (val / total) * 100
-                            # 바가 너무 작아서 글씨가 안 들어갈 정도가 아니면 표시
-                            # 텍스트가 바 밖으로 나가지 않도록 바 길이의 중간에 표시
-                            if width > max_val * 0.1: # 가시성을 위해 일정 길이 이상일 때만 표시
-                                ax.text(width / 2, y_pos, f"{pct:.1f}%", va='center', ha='center', 
-                                        fontsize=8, color='white', fontweight='bold')
-
-                ax.tick_params(axis='y', labelsize=10)
-                ax.tick_params(axis='x', labelsize=9)
-            
-                # x축 범위 넉넉하게 (텍스트 잘림 방지)
-                if max_val > 0:
-                    ax.set_xlim(0, max_val * 1.15)
-            
-                # 상단/우측 테두리 제거로 깔끔하게
-                ax.spines['top'].set_visible(False)
-                ax.spines['right'].set_visible(False)
-            
-                st.pyplot(fig, width="content")
-            else:
-                st.info("입력된 데이터가 없습니다. 데이터를 추가해주세요.")
+        if fig is not None:
+            st.pyplot(fig, width="content")
         else:
-            st.info("카테고리 로드 중 오류가 발생했습니다.")
-
+            if "category" in chart_df.columns:
+                st.info("입력된 데이터가 없습니다. 데이터를 추가해주세요.")
+            else:
+                st.info("카테고리 로드 중 오류가 발생했습니다.")
 
     # =========================
     # bottom_right: 지도 (유저가 선택한 기사 한 건만 표시)
