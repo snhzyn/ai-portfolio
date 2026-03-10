@@ -11,6 +11,7 @@ from app.services.geocoder import Geocoder
 from app.services.knowledge import KnowledgeGraph
 from app.services.article_reader import ArticleReader
 from app.services.ingestion_runner import run_csv_ingestion
+from app.services.recommendation_view import build_recommendation_view
 
 # =========================
 # 공용 커넥터 / 헬퍼
@@ -99,8 +100,7 @@ def render_home():
             try:
                 file_bytes = st.session_state["uploaded_csv"]["bytes"]
 
-                with st.spinner("기사 요약 및 DB 저장 중..."):
-            
+                with st.spinner("기사 요약 및 DB 저장 중..."):            
                     result = run_csv_ingestion(file_bytes)
 
                 st.success(
@@ -252,7 +252,6 @@ def render_dashboard():
     # top: 추천 기사 테이블 + 파이차트 세팅
     # =========================
     rec_list = []
-    rec_ids = []
     rec_df_view = pd.DataFrame()
 
     chart_df = df.copy()
@@ -260,67 +259,11 @@ def render_dashboard():
 
     if selected_id is not None:
         rec_list = rec.get_similar_articles(selected_id, k=10)
-        rec_ids = [r["id"] for r in rec_list]
+        rec_df_view = build_recommendation_view(df, selected_id, rec_list)
 
-        if rec_list:
-            df_rec = df[df["id"].isin(rec_ids)].copy()
-            df_rec.set_index("id", inplace=True)
-
-            rows = []
-
-            # 유저 선택 기사는 최상단 고정
-            base_row_all = df[df["id"] == selected_id]
-            if not base_row_all.empty:
-                base_row = base_row_all.iloc[0]
-
-                base_title = (base_row.get("title", "") or "")
-                base_summary = (base_row.get("summary", "") or "")
-
-                rows.append(
-                    {
-                        "id": selected_id,
-                        "title": base_title[:50] + ("..." if len(base_title) > 80 else ""),
-                        "summary": base_summary[:50] + ("..." if len(base_summary) > 50 else ""),
-                        "category": base_row.get("category", ""),
-                        "publish_date": base_row.get("publish_date", ""),
-                        "url": base_row.get("url", ""),
-                    }
-                )
-
-            # 추천 기사 (publish_date 기준 내림차순 정렬)
-            rec_rows = []
-            for r in rec_list:
-                rid = r["id"]
-                base = df_rec.loc[rid] if rid in df_rec.index else {}
-
-                title = (base.get("title", r.get("title", "")) or "")
-                summary = (base.get("summary", "") or "")
-                category = base.get("category", r.get("category", ""))
-                publish_date = base.get("publish_date", r.get("publish_date", ""))
-                url = base.get("url", r.get("url", ""))
-
-                rec_rows.append(
-                    {
-                        "id": rid,
-                        "title": title[:50] + ("..." if len(title) > 80 else ""),
-                        "summary": summary[:50] + ("..." if len(summary) > 50 else ""),
-                        "category": category,
-                        "publish_date": publish_date,
-                        "url": url,
-                    }
-                )
-        
-            # 날짜 기준 내림차순 정렬
-            rec_rows.sort(key=lambda x: x['publish_date'], reverse=True)
-        
-            # 합치기
-            rows.extend(rec_rows)
-
-            rec_df_view = pd.DataFrame(rows)
-
-            if not rec_df_view.empty:
-                chart_df = rec_df_view
-                chart_title = "추천 뉴스 카테고리"
+        if not rec_df_view.empty:
+            chart_df = rec_df_view
+            chart_title = "추천 뉴스 카테고리"
 
 
     # =========================
