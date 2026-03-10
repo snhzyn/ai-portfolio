@@ -11,6 +11,7 @@ import pickle
 
 from pipeline.ingest.location_normalizer import LocationNormalizer
 from pipeline.ingest.article_repository import ArticleRepository
+from pipeline.ingest.classifier import ArticleClassifier
 from core.config import OPENAI_MODEL, OPENAI_EMBED_MODEL, NK_CITIES_PATH
 
 """
@@ -42,7 +43,7 @@ class LLMtoDatabase:
         self._init_db(host, database, user, password, port)
         self.repository = ArticleRepository(self.conn, self.cur)
 
-        self._load_models(
+        self.classifier = ArticleClassifier(
             tfidf_vectorizer_path = tfidf_vectorizer_path, 
             svm_model_path = svm_model_path,
             label_encoder_path = label_encoder_path
@@ -69,18 +70,6 @@ class LLMtoDatabase:
         self.conn = psycopg2.connect(host=host, database=database, user=user, password=password, port=port)
         self.cur = self.conn.cursor()
 
-    def _load_models(self, tfidf_vectorizer_path, svm_model_path, label_encoder_path):
-        """
-        Load TF-IDF vectorizer, SVM classifier, and label encoder from pickle files.
-        """
-        with open(tfidf_vectorizer_path, "rb") as f:
-            self.tfidf_vectorizer = pickle.load(f)
-
-        with open(svm_model_path, "rb") as f:
-            self.svm_model = pickle.load(f)
-
-        with open(label_encoder_path, "rb") as f:
-            self.label_encoder = pickle.load(f) 
 
     def _init_location_normalizer(self, nk_cities_path):
         try:
@@ -150,7 +139,7 @@ class LLMtoDatabase:
                 summary_text = llm.get("summary", "") or ""
                 keywords_text = self.value_to_csv_string(llm.get("keywords"))
 
-                category = self.get_category(summary_text, keywords_text)
+                category = self.classifier.predict_category(summary_text, keywords_text)
                 embedding = self.get_embeddings(summary_text, keywords_text)
 
                 self.repository.insert_summary(
@@ -259,32 +248,6 @@ class LLMtoDatabase:
             return ", ".join(x.strip() for x in value.split(","))
 
         return str(value)
-
-    # =========================
-    # ML
-    # =========================
-    def preprocess_text(self, text):
-
-        if pd.isna(text): 
-            return ""
-        text = str(text).lower() 
-        text = re.sub(r'[^가-힣a-zA-Z0-9\s]', '', text) 
-        return text    
-
-    def get_category(self, summary, keywords):
-        """
-        Predict article category using TF-IDF and SVM classifier.
-        """
-        preprocessed_summary = self.preprocess_text(summary)
-        preprocessed_keywords = self.preprocess_text(keywords)
-        combined_text = preprocessed_summary + " " + preprocessed_keywords
-
-        X_combined = self.tfidf_vectorizer.transform([combined_text])
-
-        svm_pred = self.svm_model.predict(X_combined)[0]
-
-        category = self.label_encoder.inverse_transform([svm_pred])[0]
-        return category
 
     def text_to_embedding(self, text):
         """
