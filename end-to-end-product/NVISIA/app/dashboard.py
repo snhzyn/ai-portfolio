@@ -4,7 +4,7 @@ import streamlit as st
 from streamlit_folium import st_folium
 import matplotlib.pyplot as plt
 
-from core.config import DB, DATA_DIR, MODEL_DIR
+from core.config import DB, DATA_DIR
 
 from app.services.article_reader import ArticleReader
 from app.services.chart_service import prepare_category_chart_context, build_category_bar_chart
@@ -12,24 +12,7 @@ from app.services.ingestion_runner import run_csv_ingestion
 from app.services.knowledge import KnowledgeGraph
 from app.services.recommendation_view import build_recommendation_view
 from app.services.resources import get_recommender, get_geocoder
-
-# =========================
-# 공용 커넥터 / 헬퍼
-# =========================
-
-
-def split_event_locs(event_loc_str: str):
-    """'평양시, 함경북도 청진시' → ['평양시', '함경북도 청진시']"""
-    if not event_loc_str:
-        return []
-    return [p.strip() for p in event_loc_str.split(",") if p.strip()]
-
-def split_event_orgs(event_org_str: str):
-    """selected_id의 event_org를 가져와서 좌표 테이블과 비교. 존재하는 경우 지도에 표시"""
-    if not event_org_str:
-        return []
-    return [o.strip() for o in event_org_str.split(",") if o.strip()]
-
+from app.services.session_state import init_session_state
 
 # =========================
 # Streamlit 세팅 (Home -> Dashboard)
@@ -40,12 +23,8 @@ st.set_page_config(page_title="NVISIA", layout="wide")
 plt.rc("font", family="Malgun Gothic")
 plt.rc("axes", unicode_minus=False)
 
-if "page" not in st.session_state:
-    st.session_state["page"] = "home" 
-if "uploaded_csv" not in st.session_state:
-    st.session_state["uploaded_csv"] = None  
-if "ingest_status" not in st.session_state:
-    st.session_state["ingest_status"] = {"done": False, "msg": ""}
+# session 초기화
+init_session_state(st.session_state)
 
 def go_dashboard():
     st.session_state["page"] = "dashboard"
@@ -130,12 +109,6 @@ def render_dashboard():
 
     rec = get_recommender()
     geo = get_geocoder()
-
-    if "selected_id" not in st.session_state:
-        st.session_state["selected_id"] = None
-
-    if "expanded" not in st.session_state:
-        st.session_state.expanded = False
 
 
     # =========================
@@ -279,14 +252,6 @@ def render_dashboard():
     # =========================
     with top_middle:
         st.subheader("Knowledge Graph")
-
-        # 세션 상태 초기화
-        if "last_selected_id_for_kg" not in st.session_state:
-            st.session_state["last_selected_id_for_kg"] = None
-        if "knowledge_fig" not in st.session_state:
-            st.session_state["knowledge_fig"] = None
-        if "kg_error" not in st.session_state:
-            st.session_state["kg_error"] = None
 
         # 선택된 기사가 변경되었을 때만 그래프 재생성
         if selected_id != st.session_state["last_selected_id_for_kg"]:
