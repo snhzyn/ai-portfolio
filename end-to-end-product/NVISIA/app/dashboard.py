@@ -6,12 +6,11 @@ import matplotlib.pyplot as plt
 
 from core.config import DB, DATA_DIR, MODEL_DIR
 
-from app.services.rec import Recommender
-from app.services.geocoder import Geocoder
-from app.services.knowledge import KnowledgeGraph
 from app.services.article_reader import ArticleReader
 from app.services.ingestion_runner import run_csv_ingestion
+from app.services.knowledge import KnowledgeGraph
 from app.services.recommendation_view import build_recommendation_view
+from app.services.resources import get_recommender, get_geocoder
 
 # =========================
 # 공용 커넥터 / 헬퍼
@@ -128,19 +127,8 @@ def render_dashboard():
     st.title("NVISIA: North-Korea Vision & Insights by SIA")
     st.button("Home", on_click=go_home)
 
-    # =========================
-    # 객체 호출
-    # =========================
-    @st.cache_resource
-    def get_rec():
-        return Recommender(**DB)
-
-    @st.cache_resource
-    def get_geo():
-        return Geocoder(**DB)
-    
-    rec = get_rec()
-    geo = get_geo()
+    rec = get_recommender()
+    geo = get_geocoder()
 
     if "selected_id" not in st.session_state:
         st.session_state["selected_id"] = None
