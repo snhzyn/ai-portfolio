@@ -9,6 +9,7 @@ from core.config import DB, DATA_DIR
 from app.services.article_reader import ArticleReader
 from app.services.chart_service import prepare_category_chart_context, build_category_bar_chart
 from app.services.ingestion_runner import run_csv_ingestion
+from app.services.knowledge_runner import update_knowledge_graph_state
 from app.services.knowledge import KnowledgeGraph
 from app.services.recommendation_view import build_recommendation_view
 from app.services.resources import get_recommender, get_geocoder
@@ -253,22 +254,8 @@ def render_dashboard():
     with top_middle:
         st.subheader("Knowledge Graph")
 
-        # 선택된 기사가 변경되었을 때만 그래프 재생성
-        if selected_id != st.session_state["last_selected_id_for_kg"]:
-            st.session_state["knowledge_fig"] = None
-            st.session_state["kg_error"] = None
-        
-            if rec_list:
-                try:
-                    know = KnowledgeGraph(rec_list)
-                    fig = know.get_figure()
-                    st.session_state["knowledge_fig"] = fig
-                except Exception as e:
-                    st.session_state["kg_error"] = str(e)
-        
-            st.session_state["last_selected_id_for_kg"] = selected_id
+        update_knowledge_graph_state(rec_list, selected_id, st.session_state)
 
-        # 그래프 출력
         if st.session_state["kg_error"]:
             st.error(f"그래프 생성 중 오류가 발생했습니다: {st.session_state['kg_error']}")
         elif st.session_state["knowledge_fig"]:
