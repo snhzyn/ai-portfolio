@@ -14,7 +14,7 @@ In addition to topic-focused projects, this portfolio includes a flagship **end-
 
 ### **주요 연구 분야 (Main Areas)**  
 
-- [End-to-End AI Product](https://github.com/snhzyn/ai-portfolio/tree/master/end-to-end-product/project-NVISIA)
+- [End-to-End AI Product](https://github.com/snhzyn/ai-portfolio/tree/master/end-to-end-product/NVISIA)
   - An AI-driven analytics system integrating data ingestion, LLM/ML enrichment, PostgreSQL (PostGIS, pgvector), query-time recommendation, and an interactive dashboard.    
   - 북한 관련 뉴스 데이터를 분석하여 LLM 기반 추천 기사를 대시보드 형태로 제공하는 AI 분석 시스템입니다.   
 
@@ -44,11 +44,16 @@ In addition to topic-focused projects, this portfolio includes a flagship **end-
 ```
 AI-PORTFOLIO
 ├── end-to-end-product
-│   └── project-NVISIA
-│       ├── crawling
+│   └── NVISIA
+│       ├── app
+│       ├── assets
+│       ├── core
 │       ├── data
+│       ├── pipeline
 │       ├── models
-│       ├── src
+│       ├── scripts
+│       ├── docker
+│       ├── dockerfile
 │       └── main.py
 ├── rag-langchain
 │   └── chatbot
@@ -56,20 +61,10 @@ AI-PORTFOLIO
 │   ├── movielens-autoint
 │   └── movielens-session
 ├── time-series
-│   ├── airpassengers-prediction
 │   └── usa-electricity-dtw-classification
 ├── workspace
-│   ├── algorithm
-│   │   └── baekjoon
-│   ├── deep-learning
-│   │   ├── computer-vision
-│   │   ├── nlp
-│   │   └── prediction
-│   └── machine-learning
-│       ├── classification
-│       ├── eda
-│       ├── nlp
-│       └── prediction
+│   └── algorithm
+│       └── baekjoon
 └── README.md
 
 ```
@@ -87,20 +82,7 @@ AI-PORTFOLIO
 * Time Series: ARIMA, DTW
 * Tools: Poetry, VSCode, GitHub, Docker
 
----
-
-### **기타 (Workspace)**
-
-위의 프로젝트 외에 진행한 단순 실험 및 노트북은 `/workspace` 에 아카이브 형태로 저장해두었습니다.  
-머신 러닝 모델 및 딥러닝 모델을 기반으로한 다양한 실험들을 확인하실 수 있습니다. 
-
-Additional studies, experiments, and archived projects are stored under the `/workspace` directory.  
-Includes early-stage models, EDA(Exploratory Data Analysis), and foundational deep-learning exercises.
-
-[Workspace](https://github.com/snhzyn/ai-portfolio/tree/master/workspace)
-
-
-Last updated / 최종 수정일: **2025-12-19**   
+Last updated / 최종 수정일: **2026-03-10**   
 Since July, 2025  
 
 --- 
