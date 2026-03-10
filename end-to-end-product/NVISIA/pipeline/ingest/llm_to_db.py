@@ -3,12 +3,15 @@ import pandas as pd
 import numpy as np
 import re
 import io
-from dotenv import load_dotenv
 from openai import OpenAI
 from pathlib import Path
 import json
 import psycopg2
 import pickle
+
+from pipeline.ingest.location_normalizer import LocationNormalizer
+from pipeline.ingest.article_repository import ArticleRepository
+from core.config import OPENAI_MODEL, OPENAI_EMBED_MODEL, NK_CITIES_PATH
 
 """
 LLM ingestion service for NVISIA.
@@ -20,37 +23,33 @@ Responsibilities:
 - store results in PostgreSQL
 """
 
-# .env 파일 로드
-load_dotenv()  
-
 class LLMtoDatabase:
     """
     Ingestion service that enriches uploaded CSV articles with LLM outputs,
     classifies categories, generates embeddings, and stores results in PostgreSQL.
     """
 
-    LLM_MODEL = "gpt-4o-mini"
-    EMBED_MODEL = "text-embedding-ada-002"
-
-    BASE_DIR = Path(__file__).resolve().parent.parent.parent
-    DEFAULT_NK_CITIES_PATH = BASE_DIR / "data" / "nk_cities.csv"
-
-    def __init__(self, host, database, user, password, port, tfidf_vectorizer_path, svm_model_path, label_encoder_path, nk_cities_path):
+    def __init__(self, host, database, user, password, port, tfidf_vectorizer_path, svm_model_path, label_encoder_path, nk_cities_path=None):
         """
         Initialize database connection, OpenAI client, ML models,
         and location normalization resources.
         """
 
-        self.llm_model = self.LLM_MODEL
-        self.embed_model = self.EMBED_MODEL
+        self.llm_model = OPENAI_MODEL
+        self.embed_model = OPENAI_EMBED_MODEL
+
         self._init_openai_client()
         self._init_db(host, database, user, password, port)
+        self.repository = ArticleRepository(self.conn, self.cur)
+
         self._load_models(
             tfidf_vectorizer_path = tfidf_vectorizer_path, 
             svm_model_path = svm_model_path,
             label_encoder_path = label_encoder_path
             )
-        self._load_location_maps(self.DEFAULT_NK_CITIES_PATH)
+        
+        nk_path = nk_cities_path or NK_CITIES_PATH
+        self.location_normalizer = self._init_location_normalizer(nk_path)
 
     def _init_openai_client(self):
         """
@@ -83,25 +82,15 @@ class LLMtoDatabase:
         with open(label_encoder_path, "rb") as f:
             self.label_encoder = pickle.load(f) 
 
-    def _load_location_maps(self, nk_cities_path):
-        """
-        Load North Korea city, province reference table and build normalization maps.
-        """
-     
+    def _init_location_normalizer(self, nk_cities_path):
         try:
-            self.nk_cities = pd.read_csv(nk_cities_path, encoding="euc-kr")
-            self.provinces_map, self.cities_map = self._build_maps()
-            self.BROAD_TERMS_MAP = {
-                "평안도": ["평안남도", "평안북도"],
-                "함경도": ["함경남도", "함경북도"],
-                "황해도": ["황해남도", "황해북도"]
-            }
+            return LocationNormalizer(nk_cities_path)
         except Exception as e:
-            print(f"Warning: Failed to load nk_cities.csv or build maps. Normalization will be skipped. Error: {e}")
-            self.nk_cities = None
-            self.provinces_map = {}
-            self.cities_map = {}
-            self.BROAD_TERMS_MAP = {}
+            print(
+                f"Warning: Failed to initialize LocationNormalizer. "
+                f"Normalization will be skipped. Error: {e}"
+            )
+            return None   
 
     # =========================
     # I/O
@@ -149,7 +138,7 @@ class LLMtoDatabase:
                     stats["skipped_empty"] += 1
                     continue
 
-                if self.check_url(url):
+                if self.repository.exists_by_url(url):
                     stats["skipped_existing"] += 1
                     continue
 
@@ -164,13 +153,14 @@ class LLMtoDatabase:
                 category = self.get_category(summary_text, keywords_text)
                 embedding = self.get_embeddings(summary_text, keywords_text)
 
-                self.insert_summary(
+                self.repository.insert_summary(
                     llm=llm,
                     title=title,
                     publish_date=publish_date,
                     url=url,
                     category=category,
                     embedding=embedding,
+                    value_to_csv_string = self.value_to_csv_string
                 )
 
                 stats["inserted"] += 1     
@@ -244,8 +234,8 @@ class LLMtoDatabase:
                 print("Parsing error:", result_text)
                 return None
             
-            if 'event_loc' in result:
-                normalized_loc = self.normalize_location(result['event_loc'])
+            if 'event_loc' in result and self.location_normalizer:
+                normalized_loc = self.location_normalizer.normalize(result["event_loc"])
                 if normalized_loc:
                     result['event_loc'] = normalized_loc
                   
@@ -270,126 +260,6 @@ class LLMtoDatabase:
 
         return str(value)
 
-
-    # =========================
-    # Normalization
-    # =========================
-    def _get_search_keys(self, name):
-        if pd.isna(name): return [], None
-        # "나선시(라선시)" -> ["나선시", "라선시"]
-        parts = re.split(r'[()]', name)
-        parts = [p.strip() for p in parts if p.strip()]
-        
-        canonical_name = parts[0]
-        
-        keys = []
-        for p in parts:
-            key = p
-            if key.endswith('도'): key = key[:-1]
-            elif key.endswith('시'): key = key[:-1]
-            elif key.endswith('군'): key = key[:-1]
-            elif key.endswith('구역'): key = key[:-1]
-            keys.append(key)
-        return keys, canonical_name
-
-    def _build_maps(self):
-        provinces_map = {} 
-        cities_map = {}    
-
-        for idx, row in self.nk_cities.iterrows():
-
-            p_keys, p_canon = self._get_search_keys(row['도'])
-            for k in p_keys:
-                provinces_map[k] = p_canon
-                
-            c_keys, c_canon = self._get_search_keys(row['시'])
-            for k in c_keys:
-                cities_map[k] = {
-                    'full': c_canon,
-                    'province': p_canon 
-                }
-
-        abbr_map = {
-            '평남': '평안남도',
-            '평북': '평안북도',
-            '함남': '함경남도',
-            '함북': '함경북도',
-            '황남': '황해남도',
-            '황북': '황해북도',
-            '양강': '양강도',
-            '자강': '자강도',
-            '강원': '강원도',
-            '평안도': '평안도',
-            '황해도': '황해도', 
-            '함경도': '함경도', 
-            '평안': '평안도' 
-        }
-
-        for abbr, full in abbr_map.items():
-            provinces_map[abbr] = full
-            
-        return provinces_map, cities_map
-
-    def normalize_location(self, loc_str):
-        if pd.isna(loc_str) or not isinstance(loc_str, str):
-            return None
-        
-        found_provinces = set()
-        found_cities = [] 
-        
-        for key, full_name in self.provinces_map.items():
-            if key in loc_str:
-                found_provinces.add(full_name)
-                
-        for key, info in self.cities_map.items():
-            if key in loc_str:
-                match_info = info.copy()
-                match_info['key'] = key
-                found_cities.append(match_info)
-                
-        implied_provinces = set()
-        for c in found_cities:
-            if pd.notna(c['province']):
-                implied_provinces.add(c['province'])
-                
-        temp_provinces = set()
-        for p in found_provinces:
-            if p not in implied_provinces:
-                temp_provinces.add(p)
-        
-        all_present_specific_provinces = temp_provinces.union(implied_provinces)
-        
-        final_provinces = set()
-        for p in temp_provinces:
-            is_redundant_broad = False
-            if p in self.BROAD_TERMS_MAP:
-                for specific in self.BROAD_TERMS_MAP[p]:
-                    if specific in all_present_specific_provinces:
-                        is_redundant_broad = True
-                        break
-            
-            if not is_redundant_broad:
-                final_provinces.add(p)
-                
-        final_results = set()
-        
-        for p in final_provinces:
-            final_results.add(p)
-            
-        for c in found_cities:
-            full_city = c['full']
-            province = c['province']
-            
-            if pd.notna(province):
-                final_results.add(f"{province} {full_city}")
-            else:
-                final_results.add(full_city)
-                
-        if not final_results:
-            return None
-            
-        return ', '.join(sorted(list(final_results)))
-    
     # =========================
     # ML
     # =========================
@@ -436,62 +306,7 @@ class LLMtoDatabase:
         embed_keywords = self.text_to_embedding(keywords)
         embed_rec = np.hstack([embed_summary, embed_keywords])
         return embed_rec
-
-    # =========================
-    # DB
-    # =========================    
-    def insert_summary(self, llm, title, publish_date, url, category, embedding):
-        """
-        Insert enriched article record into summary table.
-        """
-
-        query = """
-            INSERT INTO summary
-                (summary, keywords, event_title, event_date,
-                 event_person, event_org, event_loc, url, title, publish_date, category, embedding)
-            VALUES
-                (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (url) DO NOTHING;
-        """
-
-        values = (
-            llm.get("summary"),
-            self.value_to_csv_string(llm.get("keywords")),
-            llm.get("event_title"),
-            llm.get("event_date"),
-            self.value_to_csv_string(llm.get("event_person")),
-            self.value_to_csv_string(llm.get("event_org")),
-            self.value_to_csv_string(llm.get("event_loc")),
-            url,
-            title, 
-            publish_date,
-            category,
-            embedding.tolist(),
-        )
-
-        try:
-            self.cur.execute(query, values)
-            self.conn.commit()
-
-            if self.cur.rowcount == 0:
-                print(f"[DB INSERT ERROR] 이미 존재하는 기사입니다. url={url}")
-
-        except Exception as e:
-            self.conn.rollback()
-            print(f"[DB INSERT ERROR] url={url} ⇒ {e}")
-
-    def check_url(self, url):
-
-        query = """
-            SELECT COUNT(*) FROM summary
-            WHERE url = %s;
-        """
-
-        self.cur.execute(query, (url,))
-        count = self.cur.fetchone()[0]
-
-        return count > 0
-
+    
     def close(self):
         self.cur.close()
         self.conn.close()

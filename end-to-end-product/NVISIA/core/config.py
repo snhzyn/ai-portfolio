@@ -1,13 +1,21 @@
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 
-"""
+# env
+load_dotenv()  
 
-Postgres db 설정.
+# Path
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "data"
+MODEL_DIR = BASE_DIR / "models"
+NK_CITIES_PATH = DATA_DIR / "nk_cities.csv"
 
-기본값 = localhost, 환경변수 = Docker 실행 시
+# OpenAI Models
+OPENAI_MODEL = "gpt-4o-mini"
+OPENAI_EMBED_MODEL = "text-embedding-ada-002"
 
-"""
-
+# Database
 def get_db_config():
     return dict(
         host=os.getenv("DB_HOST", "localhost"),

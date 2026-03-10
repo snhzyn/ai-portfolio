@@ -15,7 +15,7 @@ notes = """
 """
 
 def main():
-    dashboard_path = Path(__file__).parent / "src" / "dashboard.py"
+    dashboard_path = Path(__file__).parent / "app" / "dashboard.py"
     sys.argv = [
         "streamlit",
         "run",
