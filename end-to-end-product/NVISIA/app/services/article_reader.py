@@ -21,7 +21,6 @@ class ArticleReader:
             user=self.db_config["user"],
             password=self.db_config["password"],
             port=self.db_config["port"],
-            options="-c client_encoding=UTF8 -c lc_messages=C"
         )
         return conn
 

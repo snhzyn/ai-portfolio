@@ -17,12 +17,12 @@ OPENAI_EMBED_MODEL = "text-embedding-ada-002"
 
 # Database
 def get_db_config():
-    return dict(
-        host=os.getenv("DB_HOST", "localhost"),
-        database=os.getenv("DB_NAME", "nvisiaDb"),
-        user=os.getenv("DB_USER", "postgres"),
-        password=os.getenv("DB_PASSWORD", "postgres1202"),
-        port=int(os.getenv("DB_PORT", "5432")),
-    )
+    return {
+        "host": os.getenv("DB_HOST", "localhost"),
+        "database": os.getenv("DB_NAME", "nvisiaDb"),
+        "user": os.getenv("DB_USER", "postgres"),
+        "password": os.getenv("DB_PASSWORD"),
+        "port": int(os.getenv("DB_PORT", "5432")),
+    }
 
 DB = get_db_config()

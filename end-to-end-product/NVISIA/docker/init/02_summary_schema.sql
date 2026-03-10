@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS summary (
-    id BIGINT PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     summary TEXT NOT NULL,
     keywords TEXT NOT NULL,
     event_title TEXT,

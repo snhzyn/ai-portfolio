@@ -3,6 +3,7 @@ import pandas as pd
 import streamlit as st
 from streamlit_folium import st_folium
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 
 from core.config import DB, DATA_DIR
 
@@ -22,7 +23,15 @@ from app.services.session_state import init_session_state
 st.set_page_config(page_title="NVISIA", layout="wide")
 
 # Matplotlib 한글 폰트
-plt.rc("font", family="Malgun Gothic")
+available_fonts = {f.name for f in fm.fontManager.ttflist}
+
+if "NanumGothic" in available_fonts:
+    plt.rc("font", family="NanumGothic")
+elif "Nanum Gothic" in available_fonts:
+    plt.rc("font", family="Nanum Gothic")
+else:
+    plt.rc("font", family="DejaVu Sans")
+
 plt.rc("axes", unicode_minus=False)
 
 # session 초기화
@@ -109,14 +118,27 @@ def render_dashboard():
     st.title("NVISIA: North-Korea Vision & Insights by SIA")
     st.button("Home", on_click=go_home)
 
-    rec = get_recommender()
-    geo = get_geocoder()
+    try:
+        rec = get_recommender()
+    except Exception as e:
+        rec = None
+        st.warning(f"추천 시스템 DB 연결에 실패하였습니다. PostgreSQL 연동을 먼저 진행해주세요.")
 
+    try:
+        geo = get_geocoder()
+    except Exception as e:
+        geo = None
+        st.warning(f"지도 시스템 DB 연결에 실패하였습니다. PostgreSQL 연동을 먼저 진행해주세요.")
 
     # =========================
     # 데이터 로드
     # =========================
-    df = ArticleReader(DB).load_all_articles()
+    try:
+        df = ArticleReader(DB).load_all_articles()
+    except Exception as e:
+        st.warning(f"기사 DB 연결에 실패하였습니다. PostgreSQL 연동을 먼저 진행해주세요.")
+        st.info("현재는 데이터베이스에 연결되지 않아 데모 모드로 실행 중입니다.")
+        st.stop()
 
     if df is None:
         st.warning("테이블이 존재하지 않습니다. Home에서 CSV 업로드를 먼저 진행해주세요.")
@@ -171,7 +193,7 @@ def render_dashboard():
     chart_df = df.copy()
     chart_title = "전체 뉴스 카테고리"
 
-    if selected_id is not None:
+    if selected_id is not None and rec is not None:
         rec_list = rec.get_similar_articles(selected_id, k=10)
         rec_df_view = build_recommendation_view(df, selected_id, rec_list)
 
@@ -222,7 +244,7 @@ def render_dashboard():
     # =========================
     with bottom_right:
 
-        if selected_id:
+        if selected_id and geo is not None:
             df_sel = df[df["id"] == selected_id].copy()
 
             m = geo.build_article_map(df_sel)
