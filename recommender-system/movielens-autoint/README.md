@@ -99,45 +99,17 @@ AutoInt+는 AutoInt 보다 미세하나 성능이 개선되었습니다. 작은 
 폴더의 구조는 다음과 같습니다.  
 
 ```
-MovieLens-1M(Autoint)
-	│
-autoint
-	│  autoint.py
-	│  show_st.py
-	│  README.md
-	│  poetry.lock	
-	│  pyproject.toml	
-	│
-	├─ data
-	│    │  field_dims.npy
-	│    │  label_encoders.pkl
-	│    │
-	│    └─ ml-1m
-	│         │  movies_prepro.csv
-	│         │  ratings_prepro.csv
-	│         │  users_prepro.csv
-	│         │
-	│         ├─ raw
-	│         │   │  movies.dat
-	│         │   │  ratings.dat
-	│         │   │  users.dat
-	│         │   └─ README.md
-	│         │
-	│		  └─ image
-	│
-	│
-	├─ model
-	│    │  autoInt_model_weights.h5
-	│ 
-    ├─ notebooks
-	│      │  eda.ipynb
-	│      │  prepro.ipynb
-	│      │  autoint.ipynb
-	│      │  autointMLP.ipynb
-	│
-	└─ __pycache__
-	      autoint.cpython-311.pyc
-	      show_st.cpython-311.pyc
+MovieLens-1M(Autoint)\
+    ├── data\
+	│   ├── image\
+	│   ├── ml-1m\
+	│   ├── field_dims.npy
+	│   └── label_encoders.pkl
+	├── model\
+	│   └── autoInt_model_weights.h5
+    ├── autoint.py
+    ├── show_st.py
+	└── README.md
 ```
 
 ---
