@@ -4,13 +4,15 @@ import io
 from openai import OpenAI
 import psycopg2
 
+from core.config import OPENAI_MODEL, OPENAI_EMBED_MODEL, NK_CITIES_PATH
 
 from pipeline.ingest.location_normalizer import LocationNormalizer
 from pipeline.ingest.article_repository import ArticleRepository
 from pipeline.ingest.classifier import ArticleClassifier
 from pipeline.ingest.embedding_service import EmbeddingService
 from pipeline.ingest.llm_extractor import LLMExtractor
-from core.config import OPENAI_MODEL, OPENAI_EMBED_MODEL, NK_CITIES_PATH
+
+
 
 """
 LLM ingestion service for NVISIA.
@@ -80,7 +82,6 @@ class LLMtoDatabase:
         """
         self.conn = psycopg2.connect(host=host, database=database, user=user, password=password, port=port)
         self.cur = self.conn.cursor()
-
 
     def _init_location_normalizer(self, nk_cities_path):
         try:

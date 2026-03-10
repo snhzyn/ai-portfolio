@@ -1,20 +1,16 @@
-# =========================
-# import
-# =========================
 import pandas as pd
-from core.config import DB, DATA_DIR, MODEL_DIR
 
 import streamlit as st
 from streamlit_folium import st_folium
 import matplotlib.pyplot as plt
 
+from core.config import DB, DATA_DIR, MODEL_DIR
+
 from app.services.rec import Recommender
 from app.services.geocoder import Geocoder
 from app.services.knowledge import KnowledgeGraph
 from app.services.article_reader import ArticleReader
-from pipeline.ingest.llm_to_db import LLMtoDatabase
-
-
+from app.services.ingestion_runner import run_csv_ingestion
 
 # =========================
 # 공용 커넥터 / 헬퍼
@@ -43,18 +39,12 @@ st.set_page_config(page_title="NVISIA", layout="wide")
 plt.rc("font", family="Malgun Gothic")
 plt.rc("axes", unicode_minus=False)
 
-# LLMtoDatabase용 pickle 경로
-TFIDF_VECTORIZER_PATH = MODEL_DIR / "vectorizer.pkl"
-SVM_MODEL_PATH = MODEL_DIR / "svm.pkl"
-LABEL_ENCODER_PATH = MODEL_DIR / "label.pkl"
-
 if "page" not in st.session_state:
     st.session_state["page"] = "home" 
 if "uploaded_csv" not in st.session_state:
     st.session_state["uploaded_csv"] = None  
 if "ingest_status" not in st.session_state:
     st.session_state["ingest_status"] = {"done": False, "msg": ""}
-
 
 def go_dashboard():
     st.session_state["page"] = "dashboard"
@@ -110,21 +100,8 @@ def render_home():
                 file_bytes = st.session_state["uploaded_csv"]["bytes"]
 
                 with st.spinner("기사 요약 및 DB 저장 중..."):
-                    llm_db = LLMtoDatabase(
-                        host=DB["host"],
-                        database=DB["database"],
-                        user=DB["user"],
-                        password=DB["password"],
-                        port=DB["port"],
-                        tfidf_vectorizer_path=TFIDF_VECTORIZER_PATH,
-                        svm_model_path=SVM_MODEL_PATH,
-                        label_encoder_path=LABEL_ENCODER_PATH,                        
-                    )
-
-                    try:
-                        result = llm_db.csv_to_db(file_bytes)
-                    finally:
-                        llm_db.close()
+            
+                    result = run_csv_ingestion(file_bytes)
 
                 st.success(
                     f"저장이 완료되었습니다. 전체 기사={result['total']} / 정상 저장={result['inserted']} "
