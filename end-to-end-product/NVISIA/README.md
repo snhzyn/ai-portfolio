@@ -313,7 +313,7 @@ docker compose up
 
 ---
 
-### Refactor & Cloud Deployment  
+## Refactor & Cloud Deployment  
 
 - **손호진(Hojin Son)**   
 
