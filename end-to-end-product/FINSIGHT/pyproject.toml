@@ -1,0 +1,24 @@
+[project]
+name = "finsight"
+version = "0.1.0"
+description = "Multi-agent financial intelligence system built with FastAPI and LangGraph."
+authors = [
+    { name = "snhzyn", email = "sonhojin1202@gmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "pydantic-settings",
+    "langgraph",
+    "langchain",
+    "anthropic",
+    "python-dotenv",
+    "httpx",
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
