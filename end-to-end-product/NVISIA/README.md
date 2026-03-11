@@ -5,17 +5,16 @@
 
 > Originally developed as a collaborative project.  
 > This version includes refactoring improvements and cloud deployment.  
+
 > In collaboration with **SI Analytics** (https://si-analytics.ai/)
 
 ---
 
 ## Demo
 
-**Demo Video**  
-[Youtube](https://www.youtube.com/watch?v=ODp4eys6998)  
-
-**Live Demo**  
-[LINK](https://nvisia-681939980235.asia-northeast3.run.app/)  
+[Demo Video](https://www.youtube.com/watch?v=ODp4eys6998)
+ 
+[Live Demo](https://nvisia-681939980235.asia-northeast3.run.app/)  
 _Note: The live demo is maintained on a limited basis due to cloud resource costs._  
 
 ---
@@ -29,6 +28,8 @@ The system processes news datasets through a full pipeline:
 `Data Ingestion → ETL → LLM Enrichment → ML Classification → Database Storage → Analytics Dashboard`  
 
 This enables researchers, analysts, and policy professionals to explore North Korea–related developments in a structured and interactive way.  
+
+
 
 NVISIA는 북한 관련 뉴스를 자동으로 수집하고 구조화하며 분석 및 시각화하는 End-to-End AI 기반 뉴스 인텔리전스 플랫폼입니다.  
 
@@ -312,12 +313,12 @@ docker compose up
 
 ---
 
-### Refactor & Cloud Deployment
+### Refactor & Cloud Deployment  
 
-- **손호진(Hojin Son)**  
-  - Code refactoring and repository restructuring  
-  - Docker containerization  
-  - Cloud deployment (Google Cloud Run)  
+- **손호진(Hojin Son)**   
+  - Code refactoring and repository restructuring     
+  - Docker containerization   
+  - Cloud deployment (Google Cloud Run)   
 
 ---
 
