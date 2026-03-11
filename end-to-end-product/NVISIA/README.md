@@ -2,8 +2,20 @@
 
 > **End-to-End AI-Powered News Intelligence Platform for North Korea Analysis**
 > **북한 뉴스 분석을 위한 End-to-End AI 인텔리전스 플랫폼**
-> Developed as part of the ModuLabs Aiffel Data Scientist Bootcamp
+> Originally developed as a collaborative project. 
+> This version includes refactoring improvements and cloud deployment.  
 > In collaboration with **SI Analytics** (https://si-analytics.ai/)
+
+---
+
+## Demo
+
+**Demo Video**  
+[Youtube](https://www.youtube.com/watch?v=ODp4eys6998)  
+
+**Live Demo**  
+[LINK](https://nvisia-681939980235.asia-northeast3.run.app/)  
+_Note: The live demo is maintained on a limited basis due to cloud resource costs._  
 
 ---
 
@@ -11,12 +23,11 @@
 
 NVISIA is an end-to-end AI-powered news intelligence platform designed to collect, structure, analyze, and visualize North Korea–related news data using LLMs and machine learning.  
 
-The system processes news datasets through a full pipeline including:  
+The system processes news datasets through a full pipeline:  
 
 `Data Ingestion → ETL → LLM Enrichment → ML Classification → Database Storage → Analytics Dashboard`  
 
-It enables researchers, analysts, and policy professionals to explore North Korea–related developments in a structured and interactive way.  
-
+This enables researchers, analysts, and policy professionals to explore North Korea–related developments in a structured and interactive way.  
 
 NVISIA는 북한 관련 뉴스를 자동으로 수집하고 구조화하며 분석 및 시각화하는 End-to-End AI 기반 뉴스 인텔리전스 플랫폼입니다.  
 
@@ -129,7 +140,7 @@ Interactive dashboard for exploring news data and analytical results.
 -   psycopg2  
 
 ### **Database**  
--   PostgreSQL  
+-   Cloud SQL (PostgreSQL)  
 -   pgvector  
 -   PostGIS  
 
@@ -139,10 +150,11 @@ Interactive dashboard for exploring news data and analytical results.
 -   Pyvis / NetworkX  
 -   Matplotlib  
 
-### **DevOps & Tools**  
--   Poetry  
+### **DevOps & Infrastructure**  
+-   Google Cloud Run
 -   Docker / Docker Compose  
 -   Git  
+-   Poetry  
 
 ---
 
@@ -276,16 +288,41 @@ docker compose up
 
 ---
 
-## 프로젝트 정보 (Project Info)  
+## Contributors  
+  
+- **손호진(Hojin Son)**  
+  - Recommendation system development  
+  - Database architecture and management (PostgreSQL, pgvector, PostGIS)  
+  - Geospatial visualization implementation  
+  - File upload pipeline and App–DB integration  
 
-### Contributors  
+- **천승우**  
+  - Project manager  
+  - LLM-based summarization pipeline    
+  - Streamlit dashboard architecture  
 
-*  **손호진(Hojin Son)**: 추천 시스템 디벨롭, Database 구축 및 운영(DBA), App-DB 데이터 인터랙션 관리, 지리 정보 시각화(Geospatial Visualization), 파일 업로더 구현  
-*  **천승우**: Project Manager (PM), LLM 기반 기사 요약 파이프라인(Summarization Pipeline) 구축, Streamlit 대시보드 아키텍처 및 레이아웃  
-*  **정소민**: 도메인(북한) 기반 데이터 검증 및 평가(Domain Validation), 사용자 경험(UX) 관점의 추천 시스템 평가  
-*  **진용현**: 뉴스 분류 모델(Classification Model) 학습 및 성능 평가, Knowledge Graph 레이아웃 및 시각화 구현  
+- **정소민**  
+  - Domain validation for North Korea news data  
+  - Recommendation system evaluation from UX perspective  
 
-### Project Timeline  
+- **진용현**  
+  - News classification model training and evaluation    
+  - Knowledge graph visualization implementation  
+
+---
+
+### Refactor & Cloud Deployment
+
+- **손호진(Hojin Son)**  
+  - Code refactoring and repository restructuring  
+  - Docker containerization  
+  - Cloud deployment (Google Cloud Run)  
+
+---
+
+## Project Info  
+
+### Timeline  
 
 2025.11.17 ~ 2026.01.06  
 
