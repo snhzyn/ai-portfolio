@@ -1,8 +1,9 @@
 # NVISIA: North Korea Visual Insight with SIA
 
-> **End-to-End AI-Powered News Intelligence Platform for North Korea Analysis**
-> **북한 뉴스 분석을 위한 End-to-End AI 인텔리전스 플랫폼**
-> Originally developed as a collaborative project. 
+> **End-to-End AI-Powered News Intelligence Platform for North Korea Analysis**  
+> **북한 뉴스 분석을 위한 End-to-End AI 인텔리전스 플랫폼**  
+
+> Originally developed as a collaborative project.  
 > This version includes refactoring improvements and cloud deployment.  
 > In collaboration with **SI Analytics** (https://si-analytics.ai/)
 
