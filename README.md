@@ -19,7 +19,6 @@ In addition to topic-focused projects, this portfolio includes a flagship **end-
   - An AI-driven analytics platform integrating data ingestion, LLM/ML enrichment, PostgreSQL (PostGIS, pgvector), semantic recommendation, and an interactive dashboard.  
   - 북한 관련 뉴스 데이터를 분석하고 LLM 기반 추천 기사 및 시각화를 제공하는 AI 기반 뉴스 인텔리전스 시스템입니다.  
 
----  
 
 - [RAG & LangChain](https://github.com/snhzyn/ai-portfolio/tree/master/rag-langchain/chatbot)  
 
@@ -27,7 +26,6 @@ In addition to topic-focused projects, this portfolio includes a flagship **end-
   - Streamlit-based chatbot applications   
   - PDF, HTML 등 다양한 문서들을 파싱 후 임베딩하여, streamlit을 통해 RAG 챗봇을 구현한 프로젝트입니다.  
 
----  
 
 - [Recommender Systems](https://github.com/snhzyn/ai-portfolio/tree/master/recommender-system)  
 
@@ -35,14 +33,12 @@ In addition to topic-focused projects, this portfolio includes a flagship **end-
   - Session-based recommendation (MovieLens)   
   - AutoInt 및 세션 기반 추천 시스템을 구현한 프로젝트입니다.  
 
----  
 
 - [Time-Series Forecasting](https://github.com/snhzyn/ai-portfolio/tree/master/time-series)  
 
   - DTW-based time-series classification   
   - ARIMA 기반의 시계열 예측 모델 및 DTW 기반의 시계열 데이터 분류 모델입니다.  
-
----  
+  
 
 - [Algorithm & Problem Solving](https://github.com/snhzyn/ai-portfolio/tree/master/algorithm)
   - Implementation, String, Sorting, Data Structure, Brute Force  
