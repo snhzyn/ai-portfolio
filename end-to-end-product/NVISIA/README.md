@@ -316,6 +316,7 @@ docker compose up
 ### Refactor & Cloud Deployment  
 
 - **손호진(Hojin Son)**   
+
   - Code refactoring and repository restructuring     
   - Docker containerization   
   - Cloud deployment (Google Cloud Run)   
