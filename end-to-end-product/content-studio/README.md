@@ -26,21 +26,26 @@ based on the user's content request.
 LangGraph's Send routing mechanism is used to orchestrate dynamic
 agent execution.
 
+The system implements a self-revision loop where generated scripts are evaluated
+by a QA agent and automatically improved by a revision agent before final packaging.
+
 START
-  ↓
+ ↓
 Director (Claude Sonnet)
-  ↓
+ ↓
 Router
-  ↓
+ ↓
 Dynamic Agents
-  ├ research
-  ├ script
-  ├ storyboard
-  ├ title_thumbnail
-  └ music
-  ↓
-QA
-  ↓
+ ├ Research
+ ├ Script
+ ├ Storyboard
+ ├ Title
+ └ Music
+ ↓
+QA (Haiku)
+ ↓
+Revision (Sonnet)
+ ↓
 Packaging
-  ↓
+ ↓
 END

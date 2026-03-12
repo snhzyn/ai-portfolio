@@ -49,7 +49,7 @@ Return JSON:
     except Exception:
         parsed = {
             "core_angle": request["topic"],
-            "agent_plan": ["script", "storyboard", "title_thumbnail", "music"]
+            "agent_plan": ["script", ] # "storyboard", "title_thumbnail", "music"
         }
 
     return {

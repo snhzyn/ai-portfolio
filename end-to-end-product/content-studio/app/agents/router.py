@@ -1,23 +1,24 @@
 """
-Dynamic agent router.
+Routing helpers for dynamic agent execution.
 
-This node converts the director's plan into LangGraph routing decisions.
+This module contains conditional edge routing functions used by LangGraph
+to dynamically dispatch specialist agents based on the director's plan.
 """
 
 from langgraph.types import Send
+
 from app.schemas.state import ContentStudioState
 
 
 def route_agents(state: ContentStudioState):
     """
-    Send execution to the planned agents.
+    Route execution to the specialist agents selected by the director.
+
+    Args:
+        state: The current graph state containing the director's planned agents.
+
+    Returns:
+        A list of Send instructions for LangGraph conditional routing.
     """
-
     planned = state.get("planned_agents", [])
-
-    routes = []
-
-    for agent in planned:
-        routes.append(Send(agent, state))
-
-    return routes
+    return [Send(agent_name, state) for agent_name in planned]
