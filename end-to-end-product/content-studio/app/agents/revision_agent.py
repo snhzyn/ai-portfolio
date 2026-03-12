@@ -7,6 +7,7 @@ Improves the selected script using QA feedback.
 from app.schemas.state import ContentStudioState
 from app.services.llm_client import generate_with_sonnet
 from app.services.json_utils import parse_json_response
+from app.services.language_utils import get_language_instruction
 import json
 
 
@@ -18,17 +19,18 @@ def revision_node(state: ContentStudioState) -> ContentStudioState:
     script = state.get("best_script", {})
     topic = state["request"]["topic"]
 
+    language = state["request"].get("language", "en")
+    language_instruction = get_language_instruction(language)
+
     prompt = f"""
 You are improving a short-form video script.
-
-Avoid claims that are overly absolute, defamatory, misleading, or unnecessarily aggressive.
-Keep the tone witty and platform-native, but brand-safe.
-Do not invent unsupported factual claims.
 
 Topic: {topic}
 
 Original script:
 {json.dumps(script, ensure_ascii=False, indent=2)}
+
+{language_instruction}
 
 Improve the script by:
 - making the hook stronger
@@ -36,6 +38,8 @@ Improve the script by:
 - improving platform-native phrasing
 - keeping the same core idea
 - making the CTA more natural
+- avoiding unnecessarily aggressive, insulting, or overly niche slang
+- avoiding unsupported factual claims
 
 Return valid JSON only.
 Do not include markdown fences.

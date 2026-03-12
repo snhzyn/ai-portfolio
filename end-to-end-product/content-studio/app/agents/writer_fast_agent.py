@@ -9,6 +9,7 @@ import json
 from app.schemas.state import ContentStudioState
 from app.services.llm_client import generate_with_sonnet
 from app.services.json_utils import parse_json_response
+from app.services.language_utils import get_language_instruction
 
 
 def writer_fast_node(state: ContentStudioState) -> ContentStudioState:
@@ -27,11 +28,11 @@ def writer_fast_node(state: ContentStudioState) -> ContentStudioState:
     request = state["request"]
     topic = request["topic"]
 
+    language = state["request"].get("language", "en")
+    language_instruction = get_language_instruction(language)
+
     prompt = f"""
 You are a short-form video writer specializing in fast, punchy, high-retention scripts.
-
-Do not invent statistics, company actions, or factual claims unless they are explicitly provided in the request or context.
-If you need to make a point, use qualitative phrasing instead of fabricated numbers.
 
 Write one script for:
 Topic: {topic}
@@ -40,12 +41,15 @@ Audience: {request["audience"]}
 Tone: {request["tone"]}
 Duration: {request["duration_sec"]} seconds
 
+{language_instruction}
+
 Style requirements:
 - ultra-strong opening hook
 - short sentences
 - fast pacing
 - highly scannable delivery
 - clear CTA
+- do not invent statistics, company actions, or unsupported factual claims
 
 Return valid JSON only.
 Do not include markdown fences.
