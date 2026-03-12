@@ -9,6 +9,9 @@ logic into a dedicated service layer.
 from __future__ import annotations
 
 from app.schemas.event import EventItem
+
+from app.services.source_models import RawSourceItem
+from app.services.llm_summarizer import summarize_for_finance_briefing
 from app.services.source_models import RawSourceItem
 
 
@@ -17,24 +20,53 @@ def normalize_macro_items(raw_items: list[RawSourceItem]) -> list[EventItem]:
     Normalize macro-related raw items into EventItem objects.
     """
 
-    return [
-        EventItem(
+    events: list[EventItem] = []
+
+    for item in raw_items:
+
+        if _should_skip_llm_summary(item):
+            summary = item.content
+            importance = 7
+            confidence = 0.85 if item.source_type == "official" else 0.75
+
+        else:
+            llm_summary = summarize_for_finance_briefing(
+                text=item.content,
+                source_name=item.source_name,
+                headline=item.headline,
+            )
+
+            if llm_summary.strip() == "NO_MARKET_SIGNAL":
+
+                summary = "No market-relevant signal was identified from this source page."
+
+                importance = 3
+                confidence = 0.4
+
+            else:
+                summary = llm_summary
+                importance = 7
+                confidence = 0.85 if item.source_type == "official" else 0.75
+
+        event = EventItem(
             worker="macro",
             headline=item.headline,
             publish_date=item.publish_date,
             source=item.source_name,
             source_type=item.source_type,
             url=item.url,
-            summary=item.content,
+            summary=summary,
             market_impact="May affect global rates, USD direction, and risk-sensitive assets.",
-            importance=7,
-            confidence=0.85 if item.source_type == "official" else 0.75,
+            importance=importance,
+            confidence=confidence,
             region_tags=["US", "Global"],
             asset_tags=["rates", "usd", "equities"],
             event_type="macro_update",
         )
-        for item in raw_items
-    ]
+
+        events.append(event)
+
+    return events
 
 
 def normalize_market_items(raw_items: list[RawSourceItem]) -> list[EventItem]:
@@ -110,3 +142,15 @@ def normalize_geopolitical_items(raw_items: list[RawSourceItem]) -> list[EventIt
         )
         for item in raw_items
     ]
+
+
+def _should_skip_llm_summary(item: RawSourceItem) -> bool:
+    text = item.content.lower()
+
+    if "placeholder raw item" in text:
+        return True
+
+    if "it will later be replaced by real fetched source content" in text:
+        return True
+
+    return False

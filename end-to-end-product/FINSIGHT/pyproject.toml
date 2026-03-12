@@ -17,6 +17,7 @@ dependencies = [
     "anthropic",
     "python-dotenv",
     "httpx",
+    "beautifulsoup4 (>=4.14.3,<5.0.0)",
 ]
 
 [build-system]

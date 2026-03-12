@@ -35,6 +35,7 @@ def main() -> None:
     print("\n=== MACRO EVENT DETAILS ===\n")
     for event in result.get("macro_events", []):
         print("SOURCE:", event.source)
+        print("URL:", event.url)
         print("HEADLINE:", event.headline)
         print("SUMMARY:", event.summary[:200])
         print("---")
