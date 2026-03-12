@@ -15,6 +15,15 @@ from datetime import datetime
 from app.graph.state import FinanceBriefingState
 from app.schemas.event import EventItem, RankedEventItem
 
+from app.services.dedup import deduplicate_events
+from app.services.normalizers import (
+    normalize_commodities_fx_items,
+    normalize_geopolitical_items,
+    normalize_macro_items,
+    normalize_market_items,
+)
+from app.services.source_fetcher import fetch_worker_sources
+
 
 def manager_node(state: FinanceBriefingState):
     """
@@ -59,129 +68,59 @@ def manager_node(state: FinanceBriefingState):
     }
 
 
-def macro_worker_node(state: FinanceBriefingState):
+def macro_worker_node(state: FinanceBriefingState) -> FinanceBriefingState:
     """
-    Dummy macro worker.
-
-    Returns one macro event aligned with the selected date.
+    Macro worker using the source retrieval abstraction.
     """
 
-    event = EventItem(
-        worker="macro",
-        headline="Fed signals rates may remain higher for longer",
-        publish_date=state["date"],
-        source="Federal Reserve",
-        source_type="official",
-        url="https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
-        summary="The Fed indicated that inflation remains sticky and policy easing may be delayed.",
-        market_impact="Supports USD and Treasury yields; negative for rate-sensitive equities.",
-        importance=8,
-        confidence=0.91,
-        region_tags=["US", "Global"],
-        asset_tags=["rates", "usd", "equities"],
-        event_type="monetary_policy",
-    )
+    raw_items = fetch_worker_sources("macro", state["date"])
+    events = normalize_macro_items(raw_items)
 
     return {
-        "macro_events": [event],
+        "macro_events": events,
     }
 
 
-def markets_worker_node(state: FinanceBriefingState):
+def markets_worker_node(state: FinanceBriefingState) -> FinanceBriefingState:
     """
-    Dummy markets worker.
-
-    Returns one market sentiment/equities event.
+    Markets worker using the source retrieval abstraction.
     """
-
-    event = EventItem(
-        worker="markets",
-        headline="US tech stocks end mixed as investors reassess AI valuations",
-        publish_date=state["date"],
-        source="Reuters Markets",
-        source_type="wire",
-        url="https://www.reuters.com/markets/",
-        summary="Large-cap technology stocks closed mixed as investors weighed valuation concerns against AI demand momentum.",
-        market_impact="Mixed impact on global risk sentiment and semiconductor-related equities.",
-        importance=7,
-        confidence=0.84,
-        region_tags=["US", "Global", "Korea"],
-        asset_tags=["equities", "semiconductors", "risk_sentiment"],
-        event_type="equity_market_sentiment",
-    )
+    raw_items = fetch_worker_sources("markets", state["date"])
+    events = normalize_market_items(raw_items)
 
     return {
-        "markets_events": [event],
+        "markets_events": events,
     }
 
 
-def commodities_fx_worker_node(state: FinanceBriefingState):
+def commodities_fx_worker_node(state: FinanceBriefingState) -> FinanceBriefingState:
     """
-    Dummy commodities/FX worker.
-
-    Returns one energy-linked event.
+    Commodities/FX worker using the source retrieval abstraction.
     """
-
-    event = EventItem(
-        worker="commodities_fx",
-        headline="Oil prices rise on renewed Middle East supply concerns",
-        publish_date=state["date"],
-        source="Reuters Commodities",
-        source_type="wire",
-        url="https://www.reuters.com/markets/commodities/",
-        summary="Oil prices moved higher as markets priced in elevated geopolitical supply risk.",
-        market_impact="Higher energy prices may pressure importers and transport-heavy sectors while supporting inflation concerns.",
-        importance=8,
-        confidence=0.87,
-        region_tags=["Middle East", "Global", "Korea"],
-        asset_tags=["oil", "fx", "equities", "inflation"],
-        event_type="energy_supply_risk",
-    )
+    raw_items = fetch_worker_sources("commodities_fx", state["date"])
+    events = normalize_commodities_fx_items(raw_items)
 
     return {
-        "commodities_fx_events": [event],
+        "commodities_fx_events": events,
     }
 
 
-def geopolitical_worker_node(state: FinanceBriefingState):
+def geopolitical_worker_node(state: FinanceBriefingState) -> FinanceBriefingState:
     """
-    Dummy geopolitical worker.
-
-    Returns one geopolitical risk event with financial spillover.
+    Geopolitical risk worker using the source retrieval abstraction.
     """
-
-    event = EventItem(
-        worker="geopolitical",
-        headline="New trade restrictions raise concerns over semiconductor supply chains",
-        publish_date=state["date"],
-        source="Reuters World",
-        source_type="wire",
-        url="https://www.reuters.com/world/",
-        summary="New trade restrictions increased uncertainty around semiconductor supply chains and export flows.",
-        market_impact="May weigh on semiconductor exporters and raise cross-border trade uncertainty.",
-        importance=7,
-        confidence=0.82,
-        region_tags=["US", "China", "Taiwan", "Korea", "Global"],
-        asset_tags=["equities", "semiconductors", "trade"],
-        event_type="trade_restriction",
-    )
+    raw_items = fetch_worker_sources("geopolitical", state["date"])
+    events = normalize_geopolitical_items(raw_items)
 
     return {
-        "geopolitical_events": [event],
+        "geopolitical_events": events,
     }
 
 
-def lead_analyst_node(state: FinanceBriefingState):
+def lead_analyst_node(state: FinanceBriefingState) -> FinanceBriefingState:
     """
     Aggregate, deduplicate, and rank worker outputs.
-
-    Simply,
-    - merge all worker events
-    - skip real deduplication for now
-    - assign fixed verification/country relevance logic
-    - compute priority score
     """
-    
     all_events = (
         state.get("macro_events", [])
         + state.get("markets_events", [])
@@ -189,10 +128,12 @@ def lead_analyst_node(state: FinanceBriefingState):
         + state.get("geopolitical_events", [])
     )
 
+    deduplicated_events, supporting_sources_map = deduplicate_events(all_events)
+
     country = state["country"]
 
     ranked_events: list[RankedEventItem] = []
-    for event in all_events:
+    for event in deduplicated_events:
         country_relevance = _estimate_country_relevance(event=event, country=country)
         priority_score = round(
             (0.5 * event.importance) + (0.3 * country_relevance) + (0.2 * (event.confidence * 10)),
@@ -204,16 +145,18 @@ def lead_analyst_node(state: FinanceBriefingState):
             verification_status="verified" if event.confidence >= 0.85 else "partially_verified",
             country_relevance=country_relevance,
             priority_score=priority_score,
-            supporting_sources=[],
+            supporting_sources=supporting_sources_map.get(event.headline, []),
         )
         ranked_events.append(ranked_event)
 
     ranked_events.sort(key=lambda x: x.priority_score, reverse=True)
 
+    top_themes = list(dict.fromkeys(event.event_type for event in ranked_events))[:3]
+
     analyst_summary = {
         "total_events_collected": len(all_events),
-        "total_events_after_dedup": len(all_events),
-        "top_themes": [event.event_type for event in ranked_events[:3]],
+        "total_events_after_dedup": len(deduplicated_events),
+        "top_themes": top_themes,
         "key_risks": [
             "Dollar strength",
             "Energy import pressure",
@@ -230,14 +173,15 @@ def lead_analyst_node(state: FinanceBriefingState):
             "Export-sensitive equities",
         ],
         "methodology_notes": [
-            "Step 4 uses dummy worker outputs.",
-            "Deduplication and verification logic will be expanded in later steps.",
+            "This version uses source-registry-based placeholder retrieval and normalization logic.",
+            "Simple event clustering is applied to reduce duplicate signals before ranking.",
+            "Real source fetching, parsing, stronger deduplication, and verification will be expanded in later steps.",
         ],
     }
 
     return {
         "all_events": all_events,
-        "deduplicated_events": all_events,
+        "deduplicated_events": deduplicated_events,
         "ranked_events": ranked_events,
         "analyst_summary": analyst_summary,
         "logs": state.get("logs", []) + [{"node": "lead_analyst", "status": "completed"}],
