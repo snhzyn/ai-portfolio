@@ -26,6 +26,7 @@ def deduplicate_events(events: list[EventItem]) -> tuple[list[EventItem], dict[s
     - deduplicated event list
     - mapping from kept event headline to supporting source names
     """
+    
     clusters: dict[tuple[str, str, str], list[EventItem]] = defaultdict(list)
 
     for event in events:

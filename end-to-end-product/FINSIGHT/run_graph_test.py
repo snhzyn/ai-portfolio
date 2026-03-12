@@ -9,7 +9,7 @@ def main() -> None:
 
     initial_state = {
         "date": date(2026, 3, 10),
-        "country": "Korea",
+        "country": "Japan",
         "max_items_per_worker": 5,
         "report_type": "eod",
         "logs": [],

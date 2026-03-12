@@ -15,6 +15,7 @@ from datetime import datetime
 from app.graph.state import FinanceBriefingState
 from app.schemas.event import EventItem, RankedEventItem
 
+from app.services.relevance import estimate_country_relevance
 from app.services.dedup import deduplicate_events
 from app.services.normalizers import (
     normalize_commodities_fx_items,
@@ -134,7 +135,7 @@ def lead_analyst_node(state: FinanceBriefingState) -> FinanceBriefingState:
 
     ranked_events: list[RankedEventItem] = []
     for event in deduplicated_events:
-        country_relevance = _estimate_country_relevance(event=event, country=country)
+        country_relevance = estimate_country_relevance(event=event, country=country)
         priority_score = round(
             (0.5 * event.importance) + (0.3 * country_relevance) + (0.2 * (event.confidence * 10)),
             2,
@@ -243,25 +244,6 @@ This report summarizes the most relevant macro, market, commodities/FX, and geop
         "report_markdown": report_markdown,
         "logs": state.get("logs", []) + [{"node": "report", "status": "completed"}],
     }
-
-
-def _estimate_country_relevance(event: EventItem, country: str) -> int:
-    """
-    Simple heuristic for country relevance.
-
-    This will be replaced by profile-based scoring later.
-    """
-
-    tags_lower = {tag.lower() for tag in event.region_tags + event.asset_tags}
-    country_lower = country.lower()
-
-    if country_lower in tags_lower:
-        return 9
-    if "global" in tags_lower:
-        return 7
-    if country == "Korea" and any(tag in tags_lower for tag in ["oil", "semiconductors", "usd", "rates"]):
-        return 8
-    return 5
 
 
 def _bullet_list(items: list[str]) -> str:
