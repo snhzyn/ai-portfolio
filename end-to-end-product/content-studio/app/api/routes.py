@@ -15,7 +15,6 @@ def generate_content(request: ContentGenerateRequest):
     initial_state = {
         "request_id": request_id,
         "request": request.model_dump(),
-        "logs": [],
     }
 
     result = graph.invoke(initial_state)

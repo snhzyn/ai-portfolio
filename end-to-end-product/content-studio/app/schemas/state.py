@@ -7,22 +7,24 @@ class ContentStudioState(TypedDict, total=False):
     """
 
     request_id: str
-    request: dict
+    request: dict[str, Any]
 
-    director_brief: dict
+    director_brief: dict[str, Any]
     planned_agents: list[str]
 
-    research_output: dict
+    research_output: dict[str, Any]
 
-    script_candidates: list[dict]
-    best_script: dict
-    revised_script: dict
+    writer_fast_output: dict[str, Any]
+    writer_story_output: dict[str, Any]
+    writer_viral_output: dict[str, Any]
 
-    storyboard_output: dict
-    title_thumbnail_output: dict
-    music_output: dict
+    script_candidates: list[dict[str, Any]]
+    best_script: dict[str, Any]
+    revised_script: dict[str, Any]
 
-    qa_output: dict
-    final_json: dict
+    storyboard_output: dict[str, Any]
+    title_thumbnail_output: dict[str, Any]
+    music_output: dict[str, Any]
 
-    logs: list[dict]
+    qa_output: dict[str, Any]
+    final_json: dict[str, Any]

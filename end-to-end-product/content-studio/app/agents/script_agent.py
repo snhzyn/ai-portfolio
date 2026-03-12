@@ -28,6 +28,10 @@ Duration: {request["duration_sec"]} seconds
 
 Generate 3 different short-form video scripts.
 
+Return valid JSON only.
+Do not include markdown fences.
+Do not include any explanation before or after the JSON.
+
 Return JSON:
 
 {{
