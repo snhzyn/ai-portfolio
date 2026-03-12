@@ -174,9 +174,9 @@ def lead_analyst_node(state: FinanceBriefingState) -> FinanceBriefingState:
             "Export-sensitive equities",
         ],
         "methodology_notes": [
-            "This version uses source-registry-based placeholder retrieval and normalization logic.",
+            "This version uses source-registry-based retrieval with partial real HTTP fetching and fallback placeholders.",
             "Simple event clustering is applied to reduce duplicate signals before ranking.",
-            "Real source fetching, parsing, stronger deduplication, and verification will be expanded in later steps.",
+            "Real source parsing, broader source coverage, stronger deduplication, and verification will be expanded in later steps.",
         ],
     }
 

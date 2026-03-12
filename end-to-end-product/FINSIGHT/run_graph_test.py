@@ -32,21 +32,12 @@ def main() -> None:
     print("geopolitical:", len(result.get("geopolitical_events", [])))
 
 
-    print("\n=== MACRO EVENTS ===\n")
+    print("\n=== MACRO EVENT DETAILS ===\n")
     for event in result.get("macro_events", []):
-        print(f"{event.source} | {event.headline}")
-
-    print("\n=== MARKETS EVENTS ===\n")
-    for event in result.get("markets_events", []):
-        print(f"{event.source} | {event.headline}")
-
-    print("\n=== COMMODITIES & FX EVENTS ===\n")
-    for event in result.get("commodities_fx_events", []):
-        print(f"{event.source} | {event.headline}")
-
-    print("\n=== GEOPOLITICAL EVENTS ===\n")
-    for event in result.get("geopolitical_events", []):
-        print(f"{event.source} | {event.headline}")
+        print("SOURCE:", event.source)
+        print("HEADLINE:", event.headline)
+        print("SUMMARY:", event.summary[:200])
+        print("---")
 
     print("\n=== LOGS ===\n")
     pprint(result.get("logs", []))
