@@ -22,6 +22,8 @@ class ContentStudioState(TypedDict, total=False):
     best_script: dict[str, Any]
     revised_script: dict[str, Any]
 
+    final_topic_suggestion: str
+
     storyboard_output: dict[str, Any]
     title_thumbnail_output: dict[str, Any]
     music_output: dict[str, Any]

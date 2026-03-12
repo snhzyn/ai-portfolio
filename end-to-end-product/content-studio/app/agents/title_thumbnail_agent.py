@@ -5,50 +5,89 @@ Generates title options, thumbnail text, caption, and hashtags
 for the final video package based on the selected script and language.
 """
 
+import re
+
 from app.schemas.state import ContentStudioState
+from app.services.korean_text_utils import object_particle, subject_particle, topic_particle
 
 
-def _short_thumbnail_from_hook(hook: str, fallback: str) -> str:
+def _clean_phrase(text: str) -> str:
     """
-    Build short thumbnail text from a hook.
-
-    Args:
-        hook: Hook text from the selected script.
-        fallback: Fallback text if the hook is empty.
-
-    Returns:
-        A short thumbnail-style text string.
+    Clean a text phrase for reuse in titles or thumbnail text.
     """
-    if not hook:
-        return fallback
+    cleaned = text.strip()
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    return cleaned
 
-    cleaned = hook.strip().replace("?", "").replace("!", "")
-    words = cleaned.split()
 
-    if len(words) <= 3:
-        return cleaned.upper()
+def _extract_short_thumbnail_phrases(hook: str, final_topic: str, language: str) -> list[str]:
+    """
+    Build short thumbnail-style phrases from the hook and topic.
+    """
+    hook_clean = _clean_phrase(hook).replace("?", "").replace("!", "")
+    topic_clean = _clean_phrase(final_topic)
 
-    return " ".join(words[:3]).upper()
+    if language == "ko":
+        phrases = []
+
+        if hook_clean:
+            parts = re.split(r"[,.—:\-]", hook_clean)
+            for part in parts:
+                part = part.strip()
+                if not part:
+                    continue
+                words = part.split()
+                short = " ".join(words[:3]).strip()
+                if short and short not in phrases:
+                    phrases.append(short)
+
+        generic_fallbacks = [
+            topic_clean,
+            "핵심 이유 정리",
+            "왜 계속될까?",
+        ]
+
+        for fallback in generic_fallbacks:
+            if fallback and fallback not in phrases:
+                phrases.append(fallback)
+
+        return phrases[:3]
+
+    phrases = []
+
+    if hook_clean:
+        parts = re.split(r"[,.—:\-]", hook_clean)
+        for part in parts:
+            part = part.strip()
+            if not part:
+                continue
+            words = part.split()
+            short = " ".join(words[:4]).strip().upper()
+            if short and short not in phrases:
+                phrases.append(short)
+
+    if topic_clean:
+        topic_words = topic_clean.split()
+        short_topic = " ".join(topic_words[:4]).strip().upper()
+        if short_topic and short_topic not in phrases:
+            phrases.append(short_topic)
+
+    generic_fallbacks = [
+        "WHY NOW?",
+        "MORE THAN HYPE",
+        "TREND SHIFT",
+    ]
+
+    for fallback in generic_fallbacks:
+        if fallback not in phrases:
+            phrases.append(fallback)
+
+    return phrases[:3]
 
 
 def title_thumbnail_node(state: ContentStudioState) -> ContentStudioState:
     """
     Generate publish-ready metadata for the short-form video.
-
-    This agent creates titles, thumbnail copy, captions, and hashtags
-    using the current creative brief and the strongest available script.
-
-    Priority of source material:
-    1. revised_script
-    2. best_script
-    3. normalized_topic
-    4. raw topic fallback
-
-    Args:
-        state: The current LangGraph state.
-
-    Returns:
-        Updated state containing the title_thumbnail_output field.
     """
     request = state["request"]
     language = request.get("language", "en")
@@ -57,6 +96,7 @@ def title_thumbnail_node(state: ContentStudioState) -> ContentStudioState:
     director_brief = state.get("director_brief") or {}
     core_angle = director_brief.get("core_angle", raw_topic)
     normalized_topic = director_brief.get("normalized_topic", raw_topic)
+    final_topic = state.get("final_topic_suggestion") or normalized_topic or raw_topic
 
     revised_script = state.get("revised_script") or {}
     best_script = state.get("best_script") or {}
@@ -65,23 +105,23 @@ def title_thumbnail_node(state: ContentStudioState) -> ContentStudioState:
     hook = script_source.get("hook", "")
     cta = script_source.get("cta", "")
 
+    thumbnail_text = _extract_short_thumbnail_phrases(
+        hook=hook,
+        final_topic=final_topic,
+        language=language,
+    )
+
     if language == "ko":
         titles = [
-            f"요즘 왜 {normalized_topic}가 주목받을까",
-            f"{normalized_topic} 열풍의 진짜 이유",
-            f"{normalized_topic}, 단순 유행이 아닌 이유",
-            f"{normalized_topic} 한 번에 이해하기",
-            f"왜 다들 {normalized_topic}를 찾을까",
-        ]
-
-        thumbnail_text = [
-            _short_thumbnail_from_hook(hook, "왜 뜰까?"),
-            "진짜 이유",
-            "단순 유행 아님",
+            f"{final_topic}, 왜 주목받을까",
+            f"{final_topic} 핵심만 빠르게 정리",
+            f"{final_topic} 한 번에 이해하기",
+            f"{final_topic}, 왜 중요한가",
+            f"{final_topic}의 핵심 포인트",
         ]
 
         caption = (
-            f"{normalized_topic}가 왜 갑자기 주목받고 있는지 핵심만 짧고 빠르게 정리했습니다. "
+            f"{object_particle(final_topic)} 짧고 빠르게 정리했습니다. "
             f"{cta or '여러분의 생각도 댓글로 남겨주세요.'}"
         )
 
@@ -90,7 +130,7 @@ def title_thumbnail_node(state: ContentStudioState) -> ContentStudioState:
             "#트렌드",
             "#콘텐츠",
             "#바이럴",
-            "#말차" if "말차" in normalized_topic else "#이슈",
+            "#인사이트",
         ]
 
         output = {
@@ -102,24 +142,19 @@ def title_thumbnail_node(state: ContentStudioState) -> ContentStudioState:
             "hashtags": hashtags,
             "hook_reference": hook,
             "angle_reference": core_angle,
+            "final_topic_reference": final_topic,
         }
     else:
         titles = [
-            f"Why {normalized_topic.capitalize()} Is Suddenly Everywhere",
-            f"The Real Reason {normalized_topic.capitalize()} Is Trending",
-            f"What’s Driving the {normalized_topic.capitalize()} Hype?",
-            f"{normalized_topic.capitalize()} Explained in 30 Seconds",
-            f"Why Everyone Is Talking About {normalized_topic.capitalize()} Right Now",
-        ]
-
-        thumbnail_text = [
-            _short_thumbnail_from_hook(hook, "WHY MATCHA?"),
-            "MORE THAN HYPE",
-            "MATCHA TAKEOVER" if "matcha" in normalized_topic.lower() else "TREND ALERT",
+            f"Why {final_topic.capitalize()} Matters Right Now",
+            f"The Real Reason {final_topic.capitalize()} Is Trending",
+            f"{final_topic.capitalize()} Explained in 30 Seconds",
+            f"What’s Driving {final_topic.capitalize()}?",
+            f"Why Everyone Is Talking About {final_topic.capitalize()}",
         ]
 
         caption = (
-            f"{normalized_topic.capitalize()} is getting a lot of attention right now, and there are real reasons behind it. "
+            f"{final_topic.capitalize()} is getting a lot of attention right now, and there are real reasons behind it. "
             f"{cta or 'What do you think? Let me know in the comments.'}"
         )
 
@@ -128,7 +163,7 @@ def title_thumbnail_node(state: ContentStudioState) -> ContentStudioState:
             "#shorts",
             "#viralcontent",
             "#contentstudio",
-            "#matcha" if "matcha" in normalized_topic.lower() else "#topic",
+            "#insight",
         ]
 
         output = {
@@ -140,6 +175,7 @@ def title_thumbnail_node(state: ContentStudioState) -> ContentStudioState:
             "hashtags": hashtags,
             "hook_reference": hook,
             "angle_reference": core_angle,
+            "final_topic_reference": final_topic,
         }
 
     return {
