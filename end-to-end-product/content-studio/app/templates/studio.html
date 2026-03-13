@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Content Studio</title>
+  <link rel="stylesheet" href="/static/studio.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="page-header">
+      <div>
+        <h1>Content Studio</h1>
+        <p class="subtitle">
+          Generate short-form content packages with scripts, storyboard, publishing assets, and video prompts.
+        </p>
+      </div>
+      <a class="playground-link" href="/playground" target="_blank" rel="noreferrer">Open API Playground</a>
+    </header>
+
+    <main class="layout">
+      <section class="panel form-panel">
+        <h2>Create Content</h2>
+
+        <form id="content-form">
+          <label class="field">
+            <span>Topic</span>
+            <textarea
+              id="topic"
+              name="topic"
+              rows="4"
+              placeholder="e.g. Why are more Gen Z professionals getting into running lately?"
+              required
+            ></textarea>
+          </label>
+
+          <div class="field">
+            <span>Platform</span>
+            <div class="segmented" id="platform-group">
+              <button type="button" class="segment active" data-value="youtube_shorts">YouTube Shorts</button>
+              <button type="button" class="segment" data-value="tiktok">TikTok</button>
+              <button type="button" class="segment" data-value="instagram_reels">Instagram Reels</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <span>Language</span>
+            <div class="segmented" id="language-group">
+              <button type="button" class="segment active" data-value="ko">Korean</button>
+              <button type="button" class="segment" data-value="en">English</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <span>Duration</span>
+            <div class="segmented" id="duration-group">
+              <button type="button" class="segment" data-value="15">15s</button>
+              <button type="button" class="segment active" data-value="30">30s</button>
+              <button type="button" class="segment" data-value="45">45s</button>
+              <button type="button" class="segment" data-value="60">60s</button>
+            </div>
+          </div>
+
+          <label class="field">
+            <span>Audience</span>
+            <input
+              id="audience"
+              name="audience"
+              type="text"
+              placeholder="e.g. Gen Z and young professionals"
+              value="10~30대 직장인과 MZ세대"
+              required
+            />
+          </label>
+
+          <label class="field">
+            <span>Tone</span>
+            <input
+              id="tone"
+              name="tone"
+              type="text"
+              placeholder="e.g. witty, fast-paced, social-first"
+              value="재밌고 빠른 템포"
+              required
+            />
+          </label>
+
+          <label class="field">
+            <span>Reference Text (Optional)</span>
+            <textarea
+              id="reference_text"
+              name="reference_text"
+              rows="4"
+              placeholder="Optional context, angle, or instructions for the output."
+            ></textarea>
+          </label>
+
+          <input type="hidden" id="platform" value="youtube_shorts" />
+          <input type="hidden" id="language" value="ko" />
+          <input type="hidden" id="duration_sec" value="30" />
+
+          <div class="actions">
+            <button type="submit" id="generate-btn">Generate</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel result-panel">
+        <div class="result-header">
+          <h2>Result</h2>
+          <span id="status-badge" class="status-badge idle">Idle</span>
+        </div>
+
+        <div id="empty-state" class="empty-state">
+          Submit a topic to generate a content package.
+        </div>
+
+        <div id="error-box" class="error-box hidden"></div>
+
+        <div id="result-container" class="result-container hidden">
+          <div class="result-card">
+            <h3>Final Topic</h3>
+            <p id="final-topic"></p>
+          </div>
+
+          <div class="result-card">
+            <h3>Hook</h3>
+            <p id="hook"></p>
+          </div>
+
+          <div class="result-card">
+            <h3>Revised Script</h3>
+            <pre id="revised-script"></pre>
+          </div>
+
+          <div class="result-card">
+            <h3>Titles</h3>
+            <ul id="titles-list"></ul>
+          </div>
+
+          <div class="result-card">
+            <h3>Thumbnail Text</h3>
+            <ul id="thumbnail-list"></ul>
+          </div>
+
+          <div class="result-card">
+            <h3>Storyboard</h3>
+            <div id="storyboard-list"></div>
+          </div>
+
+          <div class="result-card">
+            <h3>Video Generation Prompt</h3>
+            <pre id="video-prompt"></pre>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/studio.js"></script>
+</body>
+</html>
