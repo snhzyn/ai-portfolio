@@ -5,7 +5,7 @@ LangGraph workflow definition for Content Studio.
 from langgraph.graph import StateGraph, START, END
 
 from app.schemas.state import ContentStudioState
-from app.agents.director import director_node
+from app.agents.director_agent import director_node
 from app.agents.research_agent import research_node
 from app.agents.router import route_agents
 
