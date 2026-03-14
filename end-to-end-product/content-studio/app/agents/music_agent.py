@@ -1,46 +1,151 @@
 """
 Music agent.
 
-Generates BGM direction, a Suno-ready music prompt, and editing notes
-based on the selected script, final topic, requested duration, tone,
-and output language.
+Designs background music direction and audio guidance for short-form video tools
+such as InVideo or CapCut, based on the final script, hook, tone, duration,
+and scene flow.
 """
 
 from app.schemas.state import ContentStudioState
+from app.services.json_utils import parse_json_response
+from app.services.llm_client import generate_with_haiku
+
+
+def _build_music_cues_by_duration(language: str, duration_sec: int) -> list[str]:
+    """
+    Build fallback music cue structure by duration.
+    """
+    if language == "ko":
+        if duration_sec == 15:
+            return [
+                "0-2초: 강한 신스 임팩트로 시작",
+                "2-8초: 부드러운 앰비언트 패드와 가벼운 리듬 유지",
+                "8-12초: 에너지 살짝 상승",
+                "12-15초: CTA를 위해 볼륨을 자연스럽게 낮춤",
+            ]
+        if duration_sec == 30:
+            return [
+                "0-3초: 강한 신스 임팩트로 시작",
+                "3-10초: 부드러운 앰비언트 패드와 가벼운 리듬",
+                "10-20초: 리듬과 베이스를 살짝 강화",
+                "20-27초: 감정 고조를 위한 신스 레이어 확장",
+                "27-30초: CTA를 위해 볼륨을 자연스럽게 낮춤",
+            ]
+        if duration_sec == 45:
+            return [
+                "0-3초: 강한 신스 임팩트로 시작",
+                "3-12초: 부드러운 앰비언트 패드와 가벼운 리듬",
+                "12-24초: 리듬과 베이스를 강화하며 몰입감 형성",
+                "24-36초: 감정 고조를 위한 신스 레이어 확장",
+                "36-42초: 여운을 주는 안정 구간",
+                "42-45초: CTA를 위해 볼륨을 낮춤",
+            ]
+        return [
+            "0-4초: 강한 신스 임팩트로 시작",
+            "4-15초: 부드러운 앰비언트 패드와 리듬 형성",
+            "15-30초: 리듬과 베이스를 강화하며 본격 전개",
+            "30-45초: 감정 고조를 위한 신스 레이어 확장",
+            "45-54초: 여운과 공간감을 살리는 안정 구간",
+            "54-60초: CTA 또는 엔딩을 위해 볼륨을 자연스럽게 낮춤",
+        ]
+
+    if duration_sec == 15:
+        return [
+            "0-2s: strong synth impact intro",
+            "2-8s: soft ambient pads with light rhythm",
+            "8-12s: slight energy lift",
+            "12-15s: lower volume naturally for CTA",
+        ]
+    if duration_sec == 30:
+        return [
+            "0-3s: strong synth impact intro",
+            "3-10s: soft ambient pads with light rhythm",
+            "10-20s: slightly stronger bass and pulse",
+            "20-27s: emotional lift with layered synths",
+            "27-30s: volume reduction for CTA clarity",
+        ]
+    if duration_sec == 45:
+        return [
+            "0-3s: strong synth impact intro",
+            "3-12s: soft ambient pads with light rhythm",
+            "12-24s: stronger bass and pulse for forward motion",
+            "24-36s: emotional lift with layered synths",
+            "36-42s: brief settle section with space",
+            "42-45s: lower volume for CTA clarity",
+        ]
+    return [
+        "0-4s: strong synth impact intro",
+        "4-15s: ambient pads and groove build",
+        "15-30s: stronger bass and rhythmic pulse",
+        "30-45s: emotional synth expansion",
+        "45-54s: brief atmospheric settle section",
+        "54-60s: lower volume naturally for ending or CTA",
+    ]
+
+
+def _fallback_music(language: str, final_topic: str, hook: str, duration_sec: int) -> dict:
+    """
+    Safe fallback when LLM generation fails.
+    """
+    music_cues = _build_music_cues_by_duration(language, duration_sec)
+
+    if language == "ko":
+        return {
+            "agent_name": "music",
+            "summary": "영상 생성 툴용 배경음악 방향성과 오디오 가이드 생성",
+            "bgm_direction": "몽환적이고 미래적인 앰비언트 전자 음악",
+            "music_cues": music_cues,
+            "audio_style_notes": [
+                "보컬 없는 배경음악",
+                "미래적이고 세련된 질감",
+                "숏폼 편집에 맞는 리듬감",
+                "내레이션을 방해하지 않는 믹스",
+            ],
+            "editing_notes": [
+                "첫 도입 구간에 오디오 임팩트 배치",
+                "장면 전환에 맞춰 리듬 변화를 주기",
+                "중반부에 에너지 살짝 상승",
+                "마지막 CTA 또는 엔딩 직전 볼륨 다운",
+            ],
+            "hook_reference": hook,
+            "final_topic_reference": final_topic,
+            "duration_reference": duration_sec,
+        }
+
+    return {
+        "agent_name": "music",
+        "summary": "Generated background music direction and audio guidance for video tools",
+        "bgm_direction": "dreamy futuristic ambient electronic background music",
+        "music_cues": music_cues,
+        "audio_style_notes": [
+            "instrumental only",
+            "futuristic and polished texture",
+            "rhythmic enough for short-form editing",
+            "mixed under narration cleanly",
+        ],
+        "editing_notes": [
+            "place an audio impact in the opening section",
+            "sync rhythm changes with scene cuts",
+            "lift energy slightly in the middle",
+            "lower volume before the CTA or ending",
+        ],
+        "hook_reference": hook,
+        "final_topic_reference": final_topic,
+        "duration_reference": duration_sec,
+    }
 
 
 def music_node(state: ContentStudioState) -> ContentStudioState:
     """
-    Generate music direction and editing notes for the short-form video.
-
-    This agent does not create music directly. Instead, it generates a
-    production-ready music prompt for tools such as Suno, along with
-    editing notes aligned with the requested short-form duration.
-
-    Priority of topic source:
-    1. final_topic_suggestion
-    2. normalized_topic
-    3. raw topic fallback
-
-    Priority of script source:
-    1. revised_script
-    2. best_script
-
-    Args:
-        state: The current LangGraph state.
-
-    Returns:
-        Updated state containing the music_output field.
+    Generate BGM direction and audio guidance for video generation tools.
     """
     request = state["request"]
     language = request.get("language", "en")
-    raw_topic = request["topic"]
-    tone = request["tone"]
+    tone = request.get("tone", "")
     duration_sec = request.get("duration_sec", 30)
 
     director_brief = state.get("director_brief") or {}
-    normalized_topic = director_brief.get("normalized_topic", raw_topic)
-    final_topic = state.get("final_topic_suggestion") or normalized_topic or raw_topic
+    final_topic = state.get("final_topic_suggestion") or director_brief.get("normalized_topic", "")
 
     revised_script = state.get("revised_script") or {}
     best_script = state.get("best_script") or {}
@@ -49,125 +154,135 @@ def music_node(state: ContentStudioState) -> ContentStudioState:
     hook = script_source.get("hook", "")
     script_text = script_source.get("script", "")
 
-    if duration_sec == 15:
-        script_mood = script_text[:140] if script_text else "short, punchy, high-retention social content"
-    elif duration_sec == 30:
-        script_mood = script_text[:220] if script_text else "short-form, trendy, visually engaging social content"
-    elif duration_sec == 45:
-        script_mood = script_text[:320] if script_text else "slightly more detailed short-form social content with momentum"
-    else:  # 60 sec
-        script_mood = script_text[:420] if script_text else "structured social video content with clear pacing and stronger narrative flow"
+    storyboard = state.get("storyboard_output") or {}
+    scenes = storyboard.get("scenes", [])
+
+    scene_summary = "\n".join(
+        [
+            f"{s.get('time_range')} - {s.get('visual')}"
+            for s in scenes
+        ]
+    )
 
     if language == "ko":
-        if duration_sec == 15:
-            bgm_direction = "짧고 강한 훅 중심의 경쾌한 숏폼 배경음악"
-            editing_notes = [
-                "첫 1~2초 안에 강한 비트 포인트 배치",
-                "매우 짧고 빠른 컷 중심으로 편집",
-                "핵심 자막만 크게 보여주기",
-                "후반부는 빠르게 CTA로 연결",
-            ]
-        elif duration_sec == 30:
-            bgm_direction = "경쾌하고 세련되며 숏폼 편집에 잘 맞는 현대적인 배경음악"
-            editing_notes = [
-                "첫 3초에 강한 비트 포인트 배치",
-                "장면 전환마다 리듬감 있는 컷 편집",
-                "큰 중앙 자막과 빠른 점프컷 사용",
-                "2~3초마다 시각적 변화 주기",
-                "엔드카드 직전에 볼륨을 살짝 낮춰 CTA를 강조",
-            ]
-        elif duration_sec == 45:
-            bgm_direction = "트렌디한 리듬감과 적당한 전개감을 갖춘 숏폼 배경음악"
-            editing_notes = [
-                "도입부에 강한 훅 비트 배치",
-                "중반부에 약한 변주를 넣어 지루함 방지",
-                "핵심 포인트마다 자막과 컷 전환 강조",
-                "후반부는 정리와 CTA가 자연스럽게 이어지도록 볼륨 조절",
-            ]
-        else:  # 60 sec
-            bgm_direction = "몰입감을 유지하면서도 설명형 숏폼에 어울리는 리듬 중심 배경음악"
-            editing_notes = [
-                "초반 훅 이후에도 리듬이 너무 단조롭지 않게 구성",
-                "중간 전개 구간에서 너무 과한 드롭은 피하기",
-                "정보 전달 구간은 내레이션이 잘 들리도록 BGM 밀도 조절",
-                "마지막 CTA 직전에는 살짝 정리되는 흐름 만들기",
-            ]
+        prompt = f"""
+You are the Music Agent for an AI short-form video production system.
 
-        suno_prompt = (
-            f"{final_topic}을 주제로 한 {duration_sec}초 숏폼 영상용 배경음악을 만들어줘. "
-            f"톤은 '{tone}'이고, 전체 분위기는 트렌디하고 세련되며 에너지가 있어야 해. "
-            f"과하게 웅장하지 말고, 짧은 영상 편집에 잘 맞도록 리듬감 있고 임팩트 있게 구성해줘. "
-            f"보컬 없이, 자막과 내레이션 편집에 잘 어울리게 만들어줘. "
-            f"오프닝 훅의 분위기는 '{hook}'이고, 영상 스크립트의 무드는 다음과 같아: {script_mood}"
-        )
+Your job is generating audio direction that can be embedded directly into a video generation prompt
+for tools like InVideo or CapCut.
 
-        output = {
-            "agent_name": "music",
-            "summary": "BGM 방향성과 Suno 프롬프트 생성",
-            "bgm_direction": bgm_direction,
-            "suno_prompt": suno_prompt,
-            "editing_notes": editing_notes,
-            "hook_reference": hook,
-            "final_topic_reference": final_topic,
-            "duration_reference": duration_sec,
-        }
+You must output:
+1. bgm_direction
+2. music_cues
+3. audio_style_notes
+4. editing_notes
 
+Context:
+
+Final topic:
+{final_topic}
+
+Hook:
+{hook}
+
+Tone:
+{tone}
+
+Duration:
+{duration_sec} seconds
+
+Script:
+{script_text}
+
+Scene flow:
+{scene_summary}
+
+Requirements:
+- This is a {duration_sec}-second vertical short-form video
+- Music should support quick edits and strong short-form retention
+- No vocals
+- Avoid cinematic trailer style
+- Prefer modern, social-media-friendly background music
+- Match the emotional arc of the script
+- Reflect the requested runtime in the music structure
+- Output should help a video generation tool choose or create suitable BGM automatically
+
+Return JSON only.
+
+Schema:
+{{
+  "bgm_direction": "...",
+  "music_cues": ["...", "...", "..."],
+  "audio_style_notes": ["...", "...", "..."],
+  "editing_notes": ["...", "...", "..."]
+}}
+"""
     else:
-        if duration_sec == 15:
-            bgm_direction = "short, punchy, high-energy background music optimized for quick retention"
-            editing_notes = [
-                "Hit the first beat immediately",
-                "Use very fast cuts with minimal dead space",
-                "Keep captions bold and minimal",
-                "Move quickly into the CTA",
-            ]
-        elif duration_sec == 30:
-            bgm_direction = "upbeat, modern, stylish, and optimized for short-form retention"
-            editing_notes = [
-                "Hit a strong beat within the first 3 seconds",
-                "Use quick cuts synced to rhythm changes",
-                "Add large center captions for key hook moments",
-                "Keep visual changes every 2-3 seconds",
-                "Lower the BGM slightly before the CTA for clarity",
-            ]
-        elif duration_sec == 45:
-            bgm_direction = "modern and rhythmic background music with enough variation for mid-length short-form pacing"
-            editing_notes = [
-                "Open with a strong hook beat",
-                "Introduce a subtle variation in the mid section",
-                "Use pacing shifts to support key points",
-                "Reduce intensity slightly before the CTA",
-            ]
-        else:  # 60 sec
-            bgm_direction = "rhythmic, clean, and sustained background music for explanatory short-form storytelling"
-            editing_notes = [
-                "Avoid making the track feel repetitive across a full minute",
-                "Keep the BGM supportive rather than overpowering during explanation-heavy sections",
-                "Use small energy changes across segments",
-                "Let the final CTA land clearly with a lighter ending section",
-            ]
+        prompt = f"""
+You are the Music Agent for an AI short-form video production system.
 
-        suno_prompt = (
-            f"Create a {duration_sec}-second background track for a short-form video about {final_topic}. "
-            f"Tone: {tone}. "
-            f"The track should feel modern, energetic, stylish, and highly editable for social video. "
-            f"Avoid overly cinematic arrangements. Keep it clean, punchy, rhythmic, and suitable for fast cuts. "
-            f"No vocals. Make it easy to edit around captions and voiceover. "
-            f"The opening hook mood is '{hook}'. "
-            f"The script mood is: {script_mood}"
-        )
+Your job is generating audio direction that can be embedded directly into a video generation prompt
+for tools like InVideo or CapCut.
+
+Context:
+
+Final topic:
+{final_topic}
+
+Hook:
+{hook}
+
+Tone:
+{tone}
+
+Duration:
+{duration_sec} seconds
+
+Script:
+{script_text}
+
+Scene flow:
+{scene_summary}
+
+Requirements:
+- This is a {duration_sec}-second vertical short-form video
+- Reflect the requested runtime in the music structure
+- No vocals
+- Match the emotional arc of the script
+- Music should support fast social-video editing
+
+Return JSON only.
+
+Schema:
+{{
+  "bgm_direction": "...",
+  "music_cues": ["...", "...", "..."],
+  "audio_style_notes": ["...", "...", "..."],
+  "editing_notes": ["...", "...", "..."]
+}}
+"""
+
+    try:
+        response = generate_with_haiku(prompt)
+        parsed = parse_json_response(response)
 
         output = {
             "agent_name": "music",
-            "summary": "Generated BGM direction, Suno prompt, and editing notes",
-            "bgm_direction": bgm_direction,
-            "suno_prompt": suno_prompt,
-            "editing_notes": editing_notes,
+            "summary": "영상 생성 툴용 배경음악 방향성과 오디오 가이드 생성"
+            if language == "ko"
+            else "Generated background music direction and audio guidance for video tools",
+            "bgm_direction": parsed.get("bgm_direction", ""),
+            "music_cues": parsed.get("music_cues", []),
+            "audio_style_notes": parsed.get("audio_style_notes", []),
+            "editing_notes": parsed.get("editing_notes", []),
             "hook_reference": hook,
             "final_topic_reference": final_topic,
             "duration_reference": duration_sec,
         }
+
+    except Exception:
+        output = _fallback_music(language, final_topic, hook, duration_sec)
 
     return {
-        "music_output": output,
+        "music_output": output
     }

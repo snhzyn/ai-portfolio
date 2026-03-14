@@ -22,7 +22,8 @@ def _build_video_generation_prompt(
     cta: str,
     editing_notes: list[str],
     bgm_direction: str,
-    suno_prompt: str,
+    music_cues: list[str],
+    audio_style_notes: list[str],
 ) -> str:
     """
     Build a single prompt that can be pasted into a video generation tool
@@ -41,6 +42,8 @@ def _build_video_generation_prompt(
     scenes_block = "\n".join(scene_lines)
     thumbnail_block = ", ".join(thumbnail_text) if thumbnail_text else ""
     editing_block = "\n".join(f"- {note}" for note in editing_notes) if editing_notes else ""
+    music_cues_block = "\n".join(f"- {cue}" for cue in music_cues) if music_cues else ""
+    audio_style_block = "\n".join(f"- {note}" for note in audio_style_notes) if audio_style_notes else ""
 
     if language == "ko":
         return f"""
@@ -70,8 +73,11 @@ def _build_video_generation_prompt(
 배경음악 방향:
 {bgm_direction}
 
-음악 생성 참고 프롬프트:
-{suno_prompt}
+오디오 스타일 가이드:
+{audio_style_block}
+
+장면별 음악/오디오 큐:
+{music_cues_block}
 
 마무리 CTA:
 {cta}
@@ -86,6 +92,10 @@ def _build_video_generation_prompt(
 - 자막은 크고 짧고 직관적으로
 - 전체적으로 트렌디하고 소셜미디어 친화적인 느낌
 - 내레이션과 자막은 모두 한국어로 구성
+- 배경음악은 보컬 없이 사용
+- 배경음악은 내레이션을 방해하지 않도록 믹스
+- CTA 직전에는 배경음악 볼륨을 자연스럽게 낮출 것
+- 영상 생성 툴이 위 분위기에 맞는 음악을 자동 선택하거나 생성하도록 반영할 것
 """.strip()
 
     return f"""
@@ -115,8 +125,11 @@ Suggested thumbnail text:
 Background music direction:
 {bgm_direction}
 
-Music generation reference prompt:
-{suno_prompt}
+Audio style guide:
+{audio_style_block}
+
+Scene-by-scene music and audio cues:
+{music_cues_block}
 
 Final CTA:
 {cta}
@@ -131,6 +144,10 @@ Production guidelines:
 - Use large, short, high-contrast captions
 - Keep the overall style trendy, modern, and social-media-native
 - Keep all narration and on-screen text in English
+- Use instrumental background music only
+- Mix the music under narration cleanly
+- Lower music volume naturally before the CTA
+- Let the video generation tool choose or create music that matches the above direction
 """.strip()
 
 
@@ -166,7 +183,8 @@ def packaging_node(state: ContentStudioState) -> ContentStudioState:
     music_output = state.get("music_output") or {}
     editing_notes = music_output.get("editing_notes", [])
     bgm_direction = music_output.get("bgm_direction", "")
-    suno_prompt = music_output.get("suno_prompt", "")
+    music_cues = music_output.get("music_cues", [])
+    audio_style_notes = music_output.get("audio_style_notes", [])
 
     video_generation_prompt = _build_video_generation_prompt(
         language=language,
@@ -182,7 +200,8 @@ def packaging_node(state: ContentStudioState) -> ContentStudioState:
         cta=cta,
         editing_notes=editing_notes,
         bgm_direction=bgm_direction,
-        suno_prompt=suno_prompt,
+        music_cues=music_cues,
+        audio_style_notes=audio_style_notes,
     )
 
     editor_brief = {
@@ -199,7 +218,8 @@ def packaging_node(state: ContentStudioState) -> ContentStudioState:
         "scene_plan": scenes,
         "thumbnail_text": thumbnail_text,
         "bgm_direction": bgm_direction,
-        "music_prompt": suno_prompt,
+        "music_cues": music_cues,
+        "audio_style_notes": audio_style_notes,
         "editing_notes": editing_notes,
     }
 
