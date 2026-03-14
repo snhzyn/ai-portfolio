@@ -22,13 +22,13 @@
 **Content Studio** is an AI-powered production pipeline that automates the early stages of short-form video creation. Instead of manually drafting scripts, planning visuals, and assembling publishing assets, the system generates a **complete content package** from a single structured input.  
 
 Content Studio는 숏폼 영상 제작의 초기 단계를 자동화하는 AI 기반 생산 파이프라인입니다. 사용자가 주제와 조건을 입력하면 시스템은 스크립트 작성, 기획, 관련 자료 수집을 거쳐 **완성된 콘텐츠 패키지**를 생성합니다.  
-
-
+  
+  
 The system is designed as a **multi-agent workflow** orchestrated with **LangGraph** and deployed as a cloud service on **Google Cloud Platform**, with an emphasis on cost efficiency and scalability.  
 
 Content Studio는 **LangGraph 기반 멀티 에이전트 오케스트레이션**을 활용해 복잡한 생성형 AI 워크플로우를 구성했으며, **Google Cloud Platform** 상에 배포하여 비용 효율성과 확장성을 동시에 고려했습니다.  
-
-
+  
+  
 ### Pipeline Process | 처리 과정  
 
 `User Input → Director → Research → Multi Script Writers → QA Selection → Revision → Storyboard → Title & Thumbnail → Music → Packaging`
@@ -37,9 +37,11 @@ Content Studio는 **LangGraph 기반 멀티 에이전트 오케스트레이션**
 - **LLM Multi-agent Orchestration**  
   Managing specialized AI agents through LangGraph in a structured workflow    
   (LangGraph를 활용한 멀티 에이전트 구조 설계)  
+
 - **AI Content Pipeline Design**   
   Building a reusable pipeline that produces high-quality short-form content packages from minimal user input    
   (최소 입력만으로 고품질 숏폼 콘텐츠 패키지를 생성하는 파이프라인 설계)  
+
 - **End-to-End AI Product Deployment**   
   Deploying a serverless, containerized AI application on Google Cloud Run     
   (Google Cloud Run 기반 서버리스 AI 제품 배포)    
@@ -75,7 +77,7 @@ Content Studio는 **LangGraph 기반 멀티 에이전트 오케스트레이션**
 ### Dashboard: Create Section
 
 <p align="center">
-  <img src="./assets/images/dashboard.png" alt="Content Studio - Dashboard" width="90%">
+  <img src="./assets/images/dashboard.png" alt="Dashboard: Create Section" width="90%">
 </p>
 
 Users provide a topic, target audience, tone, and optional reference text, then choose the platform, language, and duration. The Director agent routes the request and coordinates downstream agents.  
@@ -87,7 +89,7 @@ Users provide a topic, target audience, tone, and optional reference text, then 
 ### Dashboard: Result Section
 
 <p align="center">
-  <img src="./assets/images/.png" alt="Content Studio - Dashboard" width="90%">
+  <img src="./assets/images/result.png" alt="Dashboard: Result Section" width="90%">
 </p>
 
 The result section provides a full production package including:  
@@ -97,8 +99,8 @@ The result section provides a full production package including:
 - publishing assets such as titles and thumbnail text  
 - music direction  
 - a final video generation prompt ready for downstream tools  
-
-
+  
+  
 결과 화면에서는 다음과 같은 제작 패키지를 제공합니다:  
 - 최종 주제 제안  
 - 수정된 최종 스크립트  
@@ -280,6 +282,8 @@ This version expands the system into a more structured multi-agent production pi
     - titles  
     - captions  
     - music direction  
+
+---
 
 ### v1.0 — Initial Prototype (2026-03-13)
 
