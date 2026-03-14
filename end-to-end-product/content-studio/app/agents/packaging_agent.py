@@ -21,6 +21,8 @@ def _build_video_generation_prompt(
     thumbnail_text: list[str],
     cta: str,
     editing_notes: list[str],
+    bgm_direction: str,
+    suno_prompt: str,
 ) -> str:
     """
     Build a single prompt that can be pasted into a video generation tool
@@ -65,6 +67,12 @@ def _build_video_generation_prompt(
 추천 썸네일 문구:
 {thumbnail_block}
 
+배경음악 방향:
+{bgm_direction}
+
+음악 생성 참고 프롬프트:
+{suno_prompt}
+
 마무리 CTA:
 {cta}
 
@@ -103,6 +111,12 @@ Scene plan:
 
 Suggested thumbnail text:
 {thumbnail_block}
+
+Background music direction:
+{bgm_direction}
+
+Music generation reference prompt:
+{suno_prompt}
 
 Final CTA:
 {cta}
@@ -151,6 +165,8 @@ def packaging_node(state: ContentStudioState) -> ContentStudioState:
 
     music_output = state.get("music_output") or {}
     editing_notes = music_output.get("editing_notes", [])
+    bgm_direction = music_output.get("bgm_direction", "")
+    suno_prompt = music_output.get("suno_prompt", "")
 
     video_generation_prompt = _build_video_generation_prompt(
         language=language,
@@ -165,6 +181,8 @@ def packaging_node(state: ContentStudioState) -> ContentStudioState:
         thumbnail_text=thumbnail_text,
         cta=cta,
         editing_notes=editing_notes,
+        bgm_direction=bgm_direction,
+        suno_prompt=suno_prompt,
     )
 
     editor_brief = {
@@ -180,11 +198,14 @@ def packaging_node(state: ContentStudioState) -> ContentStudioState:
         "cta": cta,
         "scene_plan": scenes,
         "thumbnail_text": thumbnail_text,
+        "bgm_direction": bgm_direction,
+        "music_prompt": suno_prompt,
         "editing_notes": editing_notes,
     }
 
     final_json = {
         "creative_brief": director_brief,
+        "research_package": state.get("research_output"),
         "final_topic_suggestion": state.get("final_topic_suggestion"),
         "script_candidates": state.get("script_candidates"),
         "best_script": state.get("best_script"),
